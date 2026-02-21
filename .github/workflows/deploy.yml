@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - claude/wine-cellar-app-oNk8Z
   workflow_dispatch:
 
 permissions:
