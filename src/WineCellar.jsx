@@ -397,7 +397,7 @@ Write only the tasting notes, no preamble.`
 
   const SegmentedBar = ({ data, onSegmentClick }) => (
     <div className="w-full h-12 flex rounded overflow-hidden">
-      {data.map((item) => (
+      {data.map((item, index) => (
         <div
           key={item.name}
           style={{
@@ -415,7 +415,7 @@ Write only the tasting notes, no preamble.`
 
   const Legend = ({ data, onItemClick }) => (
     <div className="flex flex-wrap gap-4 justify-center">
-      {data.map((item) => (
+      {data.map((item, index) => (
         <div
           key={item.name}
           className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity"
