@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import RackView from './RackView';
 
 // ============================================================================
 // CONSTANTS & DATA
@@ -199,6 +200,7 @@ const WineCellar = () => {
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
   const [showPeakView, setShowPeakView] = useState(false);
+  const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'rack'
 
   // Memoized calculations
   const stats = useMemo(() => {
@@ -611,10 +613,41 @@ Write only the tasting notes, no preamble.`
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-12">
-          <h1 className="text-4xl font-black text-gray-900 mb-1 tracking-tight uppercase">CELLAR</h1>
-          <p className="text-gray-500 text-xs uppercase tracking-widest">Your Personal Collection</p>
+        <div className="mb-10 flex items-end justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="text-4xl font-black text-gray-900 mb-1 tracking-tight uppercase">CELLAR</h1>
+            <p className="text-gray-500 text-xs uppercase tracking-widest">Your Personal Collection</p>
+          </div>
+          {/* View toggle */}
+          <div className="flex rounded-lg overflow-hidden border border-gray-200 shadow-sm">
+            <button
+              onClick={() => setActiveView('dashboard')}
+              className={`px-5 py-2 text-sm font-bold uppercase tracking-wider transition-colors ${
+                activeView === 'dashboard'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => setActiveView('rack')}
+              className={`px-5 py-2 text-sm font-bold uppercase tracking-wider transition-colors ${
+                activeView === 'rack'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              Rack View
+            </button>
+          </div>
         </div>
+
+        {/* Rack View */}
+        {activeView === 'rack' && <RackView wines={WINE_DATA} colors={COLORS} />}
+
+        {/* Dashboard — Stats Cards */}
+        {activeView === 'dashboard' && <>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-5 gap-4 mb-12">
@@ -1022,6 +1055,8 @@ Write only the tasting notes, no preamble.`
             </div>
           )}
         </DetailModal>
+
+        </>}
       </div>
     </div>
   );
