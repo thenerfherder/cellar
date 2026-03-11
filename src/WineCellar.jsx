@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import RackView from './RackView';
-import { WINE_DATA, WINE_PAIRINGS, TASTING_NOTES, DEFAULT_PAIRINGS, DEFAULT_TASTING_NOTES, getPairingsForWine } from './data';
+import { WINE_DATA, TASTING_NOTES, DEFAULT_TASTING_NOTES, getPairingsForWine } from './data';
 
 // ============================================================================
 // CONSTANTS & DATA
@@ -397,9 +397,9 @@ Write only the tasting notes, no preamble.`
 
   const SegmentedBar = ({ data, onSegmentClick }) => (
     <div className="w-full h-12 flex rounded overflow-hidden">
-      {data.map((item, index) => (
+      {data.map((item) => (
         <div
-          key={index}
+          key={item.name}
           style={{
             width: `${(item.value / stats.totalBottles) * 100}%`,
             backgroundColor: getColorByIndex(index)
@@ -415,9 +415,9 @@ Write only the tasting notes, no preamble.`
 
   const Legend = ({ data, onItemClick }) => (
     <div className="flex flex-wrap gap-4 justify-center">
-      {data.map((item, index) => (
+      {data.map((item) => (
         <div
-          key={index}
+          key={item.name}
           className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity"
           onClick={() => onItemClick(item.name)}
         >
@@ -755,7 +755,7 @@ Write only the tasting notes, no preamble.`
 
                   return (
                     <tr
-                      key={index}
+                      key={getWineKey(wine)}
                       className={`border-b transition-colors cursor-pointer ${
                         isSpecial
                           ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
