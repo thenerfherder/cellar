@@ -85,8 +85,35 @@ Rack layout stored in localStorage under `cellar_rack_layout`:
 
 ## Development Notes
 
-- All wine data is currently hardcoded in `src/WineCellar.jsx` as `WINE_DATA`. Future work should move this to a persistent store (localStorage, IndexedDB, or a backend).
-- `COLORS` array and `WINE_DATA` are module-level constants — passed as props to child components that need them (`RackView`).
+- All wine data lives in `src/data.js` (`WINE_DATA`, `WINE_PAIRINGS`, `TASTING_NOTES`, and `getPairingsForWine`). Future work should move this to a persistent store (localStorage, IndexedDB, or a backend).
+- `COLORS` array is defined in `src/WineCellar.jsx` and passed as props to child components that need it (`RackView`).
 - The app is fully static — no backend. Keep it that way unless there's a strong reason to add one.
 - Deploy with `npm run build`; GitHub Actions handles publishing to Pages on push to `master`.
 - API key for AI features goes in `.env` as `VITE_ANTHROPIC_API_KEY` (see `.env.example`).
+
+## Key Constants & Utilities (src/WineCellar.jsx)
+
+These are module-level and should be reused rather than redefined:
+
+- **`CONFIG`** — central thresholds: `SPECIAL_BOTTLE_THRESHOLD` ($70, blue highlight), `OTHER_THRESHOLD` (5% of total, for collapsing small segments into "Other"), `MIN_SEGMENT_DISPLAY` (3 bottles min to show label), `CURRENT_YEAR`
+- **`DRINKABILITY_STATUS`** — enum: `'Final Year'`, `'Ready Now'`, `'Age 1-5 Years'`, `'Age 5+ Years'`
+- **`COLORS`** — 18-color array for varietal/country visualization and rack bottle tokens; use `getColorByIndex(i)` to cycle through it
+- **`getWineKey(wine)`** — canonical identity key: `"producer-name-vintage"`; use for React keys and any wine lookup maps
+- **`getDrinkabilityStatus(wine)`** — returns a `DRINKABILITY_STATUS` value based on `drinkWindow` vs `CURRENT_YEAR`
+- **`isSpecialBottle(wine)`** — returns `true` if `estimatedPrice > $70` (triggers blue highlight)
+- **`extractCountry(region)`** — parses the last comma-separated token from a region string
+- **`aggregateData(items, keyExtractor, threshold)`** — groups wines by a key, collapses small groups into "Other"
+
+## Code Health & Known Tech Debt
+
+### Completed cleanups
+- `WINE_DATA`, `WINE_PAIRINGS`, `TASTING_NOTES`, `DEFAULT_PAIRINGS`, and `getPairingsForWine` extracted from `WineCellar.jsx` into `src/data.js`
+- `CURRENT_YEAR` now uses `new Date().getFullYear()` (no manual updates needed)
+- Unused imports (`DEFAULT_PAIRINGS`, `WINE_PAIRINGS`) removed from `WineCellar.jsx`
+- React list keys fixed: `SegmentedBar` and `Legend` use `item.name`; table rows use `getWineKey(wine)`
+
+### Remaining tech debt (prioritized)
+1. **Extract nested components** — `StatCard`, `SegmentedBar`, `Legend`, `WineCard`, `DetailModal`, etc. are all defined inside `WineCellar.jsx` (~979 lines). Should move to `src/components/`.
+2. **Consolidate `getXxxDetails()` functions** — four nearly-identical functions (country, varietal, drinkability, vintage) could become one generic function.
+3. **Extract filtering/sorting logic** — the `filteredCellar` useMemo is ~68 lines; should move to a utility file.
+4. **Consolidate `DetailModal` implementations** — four similar modal render blocks could use a generic factory.
