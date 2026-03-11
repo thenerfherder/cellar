@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import RackView from './RackView';
+import { WINE_DATA, WINE_PAIRINGS, TASTING_NOTES, DEFAULT_PAIRINGS, DEFAULT_TASTING_NOTES, getPairingsForWine } from './data';
 
 // ============================================================================
 // CONSTANTS & DATA
@@ -14,7 +15,7 @@ const COLORS = [
 
 const CONFIG = {
   OTHER_THRESHOLD: 0.05,
-  CURRENT_YEAR: 2025,
+  CURRENT_YEAR: new Date().getFullYear(),
   MIN_SEGMENT_DISPLAY: 3,
   SPECIAL_BOTTLE_THRESHOLD: 70.00
 };
@@ -26,93 +27,6 @@ const DRINKABILITY_STATUS = {
   AGE_5_PLUS: 'Age 5+ Years'
 };
 
-const WINE_DATA = [
-  { name: "D2", producer: "DeLille Cellars", vintage: 2021, varietal: "Bordeaux Blend", region: "Columbia Valley, Washington", quantity: 1, estimatedPrice: 49.00, drinkWindow: "2024-2039" },
-  { name: "Merlot", producer: "Leonetti Cellar", vintage: 2023, varietal: "Merlot", region: "Walla Walla Valley, Washington", quantity: 1, estimatedPrice: 127.00, drinkWindow: "2026-2043" },
-  { name: "Chardonnay", producer: "L'Ecole No 41", vintage: 2023, varietal: "Chardonnay", region: "Columbia Valley, Washington", quantity: 1, estimatedPrice: 26.00, drinkWindow: "2025-2030" },
-  { name: "Rosé", producer: "Chateau Ste Michelle", vintage: 2023, varietal: "Rosé", region: "Columbia Valley, Washington", quantity: 1, estimatedPrice: 11.00, drinkWindow: "2023-2025" },
-  { name: "Chablis", producer: "Drouhin Vaudon", vintage: 2023, varietal: "Chardonnay", region: "Chablis, Burgundy, France", quantity: 1, estimatedPrice: 30.00, drinkWindow: "2025-2033" },
-  { name: "Les Champauvins", producer: "Domaine Grand Veneur", vintage: 2022, varietal: "Côtes du Rhône Red", region: "Côtes du Rhône, France", quantity: 2, estimatedPrice: 27.00, drinkWindow: "2024-2027" },
-  { name: "Cuvée Alexandre Cabernet Sauvignon", producer: "Lapostolle", vintage: 2022, varietal: "Cabernet Sauvignon", region: "Apalta Valley, Chile", quantity: 2, estimatedPrice: 23.00, drinkWindow: "2025-2032" },
-  { name: "La Révérence", producer: "Château Tournefeuille", vintage: 2022, varietal: "Bordeaux Blend", region: "Saint-Émilion Grand Cru, France", quantity: 1, estimatedPrice: 45.00, drinkWindow: "2025-2042" },
-  { name: "Reserve", producer: "Leonetti Cellar", vintage: 2022, varietal: "Bordeaux Blend", region: "Walla Walla Valley, Washington", quantity: 1, estimatedPrice: 227.00, drinkWindow: "2027-2052" },
-  { name: "Merlot", producer: "Leonetti Cellar", vintage: 2022, varietal: "Merlot", region: "Walla Walla Valley, Washington", quantity: 1, estimatedPrice: 127.00, drinkWindow: "2025-2042" },
-  { name: "Cabernet Sauvignon", producer: "Leonetti Cellar", vintage: 2022, varietal: "Cabernet Sauvignon", region: "Walla Walla Valley, Washington", quantity: 1, estimatedPrice: 141.00, drinkWindow: "2026-2042" },
-  { name: "Château Tour Saint-Christophe", producer: "Château Tour Saint-Christophe", vintage: 2022, varietal: "Bordeaux Blend", region: "Saint-Émilion Grand Cru, France", quantity: 4, estimatedPrice: 50.00, drinkWindow: "2026-2048" },
-  { name: "Artist Series Cabernet Sauvignon", producer: "Woodward Canyon", vintage: 2021, varietal: "Cabernet Sauvignon Blend", region: "Washington State", quantity: 1, estimatedPrice: 58.00, drinkWindow: "2024-2038" },
-  { name: "Reserve", producer: "Leonetti Cellar", vintage: 2021, varietal: "Red Blend", region: "Walla Walla Valley, Washington", quantity: 1, estimatedPrice: 227.00, drinkWindow: "2027-2051" },
-  { name: "Côte du Py Morgon", producer: "Jean-Marc Burgaud", vintage: 2021, varietal: "Gamay", region: "Morgon, Beaujolais, France", quantity: 2, estimatedPrice: 35.00, drinkWindow: "2024-2031" },
-  { name: "Morgon", producer: "Domaine Gilles Coperet", vintage: 2021, varietal: "Gamay", region: "Morgon, Beaujolais, France", quantity: 2, estimatedPrice: 28.00, drinkWindow: "2023-2029" },
-  { name: "Châteauneuf-du-Pape Les Origines", producer: "Domaine Grand Veneur", vintage: 2016, varietal: "Grenache Blend", region: "Châteauneuf-du-Pape, France", quantity: 2, estimatedPrice: 65.00, drinkWindow: "2021-2041" },
-  { name: "Château Tour Saint-Christophe", producer: "Château Tour Saint-Christophe", vintage: 2020, varietal: "Bordeaux Blend", region: "Saint-Émilion Grand Cru, France", quantity: 4, estimatedPrice: 50.00, drinkWindow: "2025-2045" },
-  { name: "Château Pierre 1er", producer: "Château Pierre 1er", vintage: 2020, varietal: "Bordeaux Blend", region: "Saint-Émilion Grand Cru, France", quantity: 1, estimatedPrice: 35.00, drinkWindow: "2025-2040" },
-  { name: "Chianti Classico Riserva", producer: "Castello di Monsanto", vintage: 2019, varietal: "Sangiovese", region: "Tuscany, Italy", quantity: 2, estimatedPrice: 35.00, drinkWindow: "2022-2032" },
-  { name: "Chianti Classico Riserva", producer: "Castello di Monsanto", vintage: 2018, varietal: "Sangiovese", region: "Tuscany, Italy", quantity: 2, estimatedPrice: 35.00, drinkWindow: "2021-2031" },
-  { name: "Chianti Classico Riserva Ser Lapo", producer: "Mazzei", vintage: 2018, varietal: "Sangiovese", region: "Tuscany, Italy", quantity: 1, estimatedPrice: 42.00, drinkWindow: "2021-2033" },
-  { name: "Nina Lee Syrah", producer: "Spring Valley Vineyard", vintage: 2018, varietal: "Syrah", region: "Walla Walla Valley, Washington", quantity: 2, estimatedPrice: 70.00, drinkWindow: "2023-2038" },
-  { name: "Bourgogne Hautes-Côtes de Nuits", producer: "Domaine Nicole Lamarche", vintage: 2017, varietal: "Pinot Noir", region: "Burgundy, France", quantity: 1, estimatedPrice: 35.00, drinkWindow: "2019-2025" },
-  { name: "Château La Tour de Mons", producer: "Château La Tour de Mons", vintage: 2016, varietal: "Bordeaux Blend", region: "Margaux, Bordeaux, France", quantity: 1, estimatedPrice: 45.00, drinkWindow: "2021-2040" },
-  { name: "Beaune 1er Cru Les Aigrots Rouge", producer: "Albert Morot", vintage: 2016, varietal: "Pinot Noir", region: "Burgundy, France", quantity: 1, estimatedPrice: 70.00, drinkWindow: "2020-2031" },
-  { name: "Brut Champagne", producer: "Dom Pérignon", vintage: 2008, varietal: "Champagne Blend", region: "Champagne, France", quantity: 3, estimatedPrice: 280.00, drinkWindow: "2018-2055" },
-  { name: "Brut", producer: "Roederer Estate", vintage: null, varietal: "Sparkling Wine", region: "Anderson Valley, California", quantity: 2, estimatedPrice: 25.00, drinkWindow: "2024-2026" },
-  { name: "Malbec", producer: "El Enemigo", vintage: 2022, varietal: "Malbec", region: "Mendoza, Argentina", quantity: 2, estimatedPrice: 25.00, drinkWindow: "2024-2032" },
-  { name: "Synthesis Cabernet Sauvignon", producer: "Martin Ray", vintage: 2022, varietal: "Cabernet Sauvignon", region: "Napa Valley, California", quantity: 2, estimatedPrice: 38.00, drinkWindow: "2026-2037" },
-  { name: "Château Cantemerle", producer: "Château Cantemerle", vintage: 2020, varietal: "Bordeaux Blend", region: "Haut-Médoc, Bordeaux, France", quantity: 2, estimatedPrice: 38.00, drinkWindow: "2025-2045" },
-  { name: "Château Tronquoy", producer: "Château Tronquoy", vintage: 2018, varietal: "Bordeaux Blend", region: "Saint-Estèphe, Bordeaux, France", quantity: 4, estimatedPrice: 40.00, drinkWindow: "2024-2038" },
-  { name: "L'Esprit de Chevalier", producer: "Domaine de Chevalier", vintage: 2020, varietal: "Bordeaux Blend", region: "Pessac-Léognan, Bordeaux, France", quantity: 2, estimatedPrice: 42.00, drinkWindow: "2024-2040" },
-  { name: "Abstract", producer: "Orin Swift Cellars", vintage: 2023, varietal: "Red Blend", region: "California", quantity: 2, estimatedPrice: 28.00, drinkWindow: "2024-2033" },
-  { name: "Lytton Springs Red Blend", producer: "Ridge", vintage: 2023, varietal: "Red Blend", region: "Dry Creek Valley, Sonoma County, California", quantity: 1, estimatedPrice: 38.00, drinkWindow: "2025-2035" },
-  { name: "Chianti Classico Riserva", producer: "Castello di Monsanto", vintage: 2021, varietal: "Sangiovese", region: "Tuscany, Italy", quantity: 2, estimatedPrice: 35.00, drinkWindow: "2024-2034" },
-  { name: "Brut", producer: "Chandon", vintage: null, varietal: "Sparkling Wine", region: "California", quantity: 1, estimatedPrice: 22.00, drinkWindow: "2024-2026" },
-  { name: "Knights Valley Cabernet Sauvignon", producer: "Beringer", vintage: 2021, varietal: "Cabernet Sauvignon", region: "Knights Valley, Sonoma County, California", quantity: 1, estimatedPrice: 38.00, drinkWindow: "2024-2038" }
-];
-
-// Varietal-based pairings
-const WINE_PAIRINGS = {
-  'Bordeaux Blend': ['Grilled steak', 'Lamb chops', 'Aged cheeses', 'Beef bourguignon', 'Roasted duck'],
-  'Merlot': ['Roasted chicken', 'Pork tenderloin', 'Mushroom risotto', 'Grilled salmon', 'Pasta with tomato sauce'],
-  'Cabernet Sauvignon': ['Ribeye steak', 'Braised short ribs', 'Blue cheese', 'Grilled lamb', 'Venison'],
-  'Cabernet Sauvignon Blend': ['Grilled meats', 'BBQ ribs', 'Beef stew', 'Hard cheeses', 'Roasted vegetables'],
-  'Chardonnay': ['Lobster', 'Chicken piccata', 'Grilled fish', 'Creamy pasta', 'Brie cheese'],
-  'Pinot Noir': ['Duck breast', 'Grilled salmon', 'Mushroom dishes', 'Roasted turkey', 'Soft cheeses'],
-  'Syrah': ['Grilled lamb', 'BBQ brisket', 'Wild game', 'Spicy sausages', 'Smoked meats'],
-  'Gamay': ['Charcuterie', 'Roasted chicken', 'Salmon', 'Mushroom tart', 'Light pasta dishes'],
-  'Sangiovese': ['Pizza', 'Pasta bolognese', 'Osso buco', 'Aged Parmesan', 'Grilled vegetables'],
-  'Tempranillo': ['Paella', 'Grilled chorizo', 'Manchego cheese', 'Lamb skewers', 'Roasted peppers'],
-  'Grenache Blend': ['Grilled lamb', 'Cassoulet', 'Ratatouille', 'Herbed roast chicken', 'Mediterranean dishes'],
-  'Côtes du Rhône Red': ['Grilled meats', 'Ratatouille', 'Herb-crusted lamb', 'Goat cheese', 'BBQ chicken'],
-  'Champagne Blend': ['Oysters', 'Caviar', 'Fried chicken', 'Soft cheeses', 'Sushi'],
-  'Sparkling Wine': ['Appetizers', 'Seafood', 'Salty snacks', 'Fried foods', 'Fruit desserts'],
-  'Malbec': ['Grilled steak', 'Empanadas', 'BBQ ribs', 'Blue cheese', 'Spicy tacos'],
-  'Rosé': ['Grilled shrimp', 'Salads', 'Mediterranean dishes', 'Goat cheese', 'Light pasta'],
-  'Red Blend': ['Grilled meats', 'Hearty stews', 'BBQ', 'Aged cheeses', 'Roasted vegetables']
-};
-
-// Function to get pairings for a specific wine
-const getPairingsForWine = (wine) => WINE_PAIRINGS[wine.varietal] || DEFAULT_PAIRINGS;
-
-const TASTING_NOTES = {
-  'Bordeaux Blend': 'Rich and structured with notes of blackcurrant, cedar, tobacco, and dark chocolate. Well-integrated tannins with a long, elegant finish.',
-  'Merlot': 'Smooth and velvety with flavors of plum, black cherry, and chocolate. Soft tannins with hints of vanilla and spice.',
-  'Cabernet Sauvignon': 'Full-bodied with intense flavors of blackcurrant, blackberry, and cedar. Firm tannins with notes of tobacco, leather, and dark chocolate.',
-  'Cabernet Sauvignon Blend': 'Bold and complex with dark fruit flavors, subtle oak influence, and firm structure. Notes of cassis, vanilla, and spice.',
-  'Chardonnay': 'Rich and buttery with flavors of apple, pear, and citrus. Creamy texture with hints of vanilla, toast, and tropical fruit.',
-  'Pinot Noir': 'Elegant and silky with flavors of cherry, raspberry, and earth. Delicate tannins with notes of mushroom, forest floor, and subtle spice.',
-  'Syrah': 'Bold and spicy with flavors of blackberry, black pepper, and smoked meat. Full-bodied with notes of leather, tobacco, and dark chocolate.',
-  'Gamay': 'Light and fruity with flavors of cherry, strawberry, and raspberry. Soft tannins with floral notes and a refreshing finish.',
-  'Sangiovese': 'Medium-bodied with flavors of cherry, plum, and herbs. Bright acidity with notes of leather, tobacco, and earthy undertones.',
-  'Tempranillo': 'Medium to full-bodied with flavors of cherry, plum, and tobacco. Balanced acidity with notes of leather, vanilla, and spice.',
-  'Grenache Blend': 'Rich and fruit-forward with flavors of raspberry, cherry, and spice. Notes of herbs, leather, and a hint of white pepper.',
-  'Côtes du Rhône Red': 'Medium-bodied with flavors of red fruit, herbs, and spice. Notes of cherry, raspberry, and Mediterranean herbs.',
-  'Champagne Blend': 'Elegant and refined with fine bubbles. Flavors of citrus, apple, and brioche with notes of almond and mineral complexity.',
-  'Sparkling Wine': 'Crisp and refreshing with bright acidity. Flavors of green apple, citrus, and stone fruit with persistent bubbles.',
-  'Malbec': 'Full-bodied with flavors of blackberry, plum, and black cherry. Velvety tannins with notes of cocoa, tobacco, and spice.',
-  'Rosé': 'Fresh and fruity with flavors of strawberry, watermelon, and citrus. Crisp acidity with a light, refreshing finish.',
-  'Red Blend': 'Complex and well-balanced with layers of dark fruit, spice, and oak. Rich texture with a harmonious blend of flavors.'
-};
-
-const DEFAULT_PAIRINGS = ['Grilled meats', 'Roasted vegetables', 'Aged cheeses', 'Pasta dishes', 'Charcuterie'];
-const DEFAULT_TASTING_NOTES = 'Complex and well-balanced with rich fruit flavors, subtle oak influence, and a smooth finish.';
 
 // ============================================================================
 // UTILITY FUNCTIONS
