@@ -104,9 +104,21 @@ const RackSlot = ({ row, col, occupant, wine, color, draggingKey, isHovered, onD
 
 // ── Main rack view ────────────────────────────────────────────────────────────
 
+const DIMENSIONS_STORAGE_KEY = 'cellar_rack_dimensions';
+
 const RackView = ({ wines, colors, storageKey = DEFAULT_STORAGE_KEY }) => {
-  const [rackRows, setRackRows] = useState(10);
-  const [rackCols, setRackCols] = useState(12);
+  const [rackRows, setRackRows] = useState(() => {
+    try {
+      const saved = localStorage.getItem(DIMENSIONS_STORAGE_KEY);
+      return saved ? JSON.parse(saved).rows ?? 10 : 10;
+    } catch { return 10; }
+  });
+  const [rackCols, setRackCols] = useState(() => {
+    try {
+      const saved = localStorage.getItem(DIMENSIONS_STORAGE_KEY);
+      return saved ? JSON.parse(saved).cols ?? 12 : 12;
+    } catch { return 12; }
+  });
 
   const [rackLayout, setRackLayout] = useState(() => {
     try {
@@ -124,6 +136,10 @@ const RackView = ({ wines, colors, storageKey = DEFAULT_STORAGE_KEY }) => {
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(rackLayout));
   }, [rackLayout, storageKey]);
+
+  useEffect(() => {
+    localStorage.setItem(DIMENSIONS_STORAGE_KEY, JSON.stringify({ rows: rackRows, cols: rackCols }));
+  }, [rackRows, rackCols]);
 
   // Build varietal → color map
   const varietalColors = useMemo(() => {

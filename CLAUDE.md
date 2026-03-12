@@ -11,7 +11,6 @@ The goal is to make managing a personal cellar genuinely delightful: knowing wha
 - **Personal first**: This is for one person's cellar, not a social platform. Opinionated, fast, and focused.
 - **Beautiful UI**: Clean, minimal, high-contrast design. No clutter. Every element earns its place.
 - **Data-rich but simple**: Show the right data at the right time. Avoid overwhelming the user.
-- **Offline-capable**: All core functionality works without a network connection. AI features are optional enhancements.
 - **Fast**: The app should feel instant. No unnecessary loading states or animations.
 
 ## Tech Stack
@@ -19,8 +18,9 @@ The goal is to make managing a personal cellar genuinely delightful: knowing wha
 - **React 18** + **Vite** — frontend framework and build tool
 - **Tailwind CSS** — styling (utility-first, no component libraries)
 - **Recharts** — data visualization
+- **Firebase** — backend: Auth (Google OAuth via `signInWithPopup`) + Firestore (wine data, per-user)
 - **Anthropic Claude API** — AI-generated tasting notes (optional, requires `VITE_ANTHROPIC_API_KEY`)
-- **localStorage** — persistence for rack layout and user preferences
+- **localStorage** — rack layout and dimensions (client-side only, not synced to Firestore)
 - **GitHub Pages** — deployment target (base path: `/cellar/`)
 
 ## Current Features
@@ -42,7 +42,7 @@ The goal is to make managing a personal cellar genuinely delightful: knowing wha
 
 ## Data Model
 
-Each wine entry:
+Wine entries live in Firestore at `users/{uid}` as a `wines` array. Each entry:
 ```js
 {
   name: string,           // wine name
@@ -56,11 +56,16 @@ Each wine entry:
 }
 ```
 
-Rack layout stored in localStorage under `cellar_rack_layout`:
+Rack layout stored in localStorage under `cellar_rack_layout` (not synced to Firestore):
 ```js
 {
   "row-col": { wineIdx: number, bottleNum: number }
 }
+```
+
+Rack dimensions stored in localStorage under `cellar_rack_dimensions`:
+```js
+{ rows: number, cols: number }
 ```
 
 ## Design Language
@@ -85,9 +90,11 @@ Rack layout stored in localStorage under `cellar_rack_layout`:
 
 ## Development Notes
 
-- All wine data lives in `src/data.js` (`WINE_DATA`, `WINE_PAIRINGS`, `TASTING_NOTES`, and `getPairingsForWine`). Future work should move this to a persistent store (localStorage, IndexedDB, or a backend).
+- **Auth**: `src/AuthContext.jsx` wraps the app in a Firebase auth provider. `src/LoginPage.jsx` handles the Google sign-in UI. Unauthenticated users see only the login page.
+- **Firestore**: Wine data is loaded via `onSnapshot` on `users/{uid}` and written back with `setDoc(..., { merge: true })`. This is real-time and per-user.
+- **Static data**: `src/data.js` still contains `WINE_PAIRINGS`, `TASTING_NOTES`, and `getPairingsForWine`. These are UI-only lookups, not stored in Firestore.
 - `COLORS` array is defined in `src/WineCellar.jsx` and passed as props to child components that need it (`RackView`).
-- The app is fully static — no backend. Keep it that way unless there's a strong reason to add one.
+- Firebase config lives in `src/firebase.js` and is sourced from `.env` (`VITE_FIREBASE_*` variables — see `.env.example`).
 - Deploy with `npm run build`; GitHub Actions handles publishing to Pages on push to `master`.
 - API key for AI features goes in `.env` as `VITE_ANTHROPIC_API_KEY` (see `.env.example`).
 
