@@ -4,7 +4,7 @@ import RackView from './RackView';
 import { TASTING_NOTES, DEFAULT_TASTING_NOTES, getPairingsForWine } from './data';
 import { useAuth } from './AuthContext';
 import { db } from './firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 // ============================================================================
 // CONSTANTS & DATA
@@ -132,6 +132,13 @@ const WineCellar = () => {
   const [sortDirection, setSortDirection] = useState('asc');
   const [showPeakView, setShowPeakView] = useState(false);
   const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'rack'
+  const [showAddWine, setShowAddWine] = useState(false);
+
+  const handleAddWine = async (wine) => {
+    const updated = [...wineData, wine];
+    await setDoc(doc(db, 'users', user.uid), { wines: updated }, { merge: true });
+    setShowAddWine(false);
+  };
 
   // Memoized calculations
   const stats = useMemo(() => {
@@ -541,6 +548,73 @@ Write only the tasting notes, no preamble.`
     </div>
   );
 
+  const AddWineModal = ({ onClose, onSave }) => {
+    const empty = { producer: '', name: '', vintage: '', varietal: '', region: '', quantity: '1', estimatedPrice: '', drinkWindow: '' };
+    const [form, setForm] = useState(empty);
+    const [saving, setSaving] = useState(false);
+
+    const set = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      setSaving(true);
+      await onSave({
+        producer: form.producer.trim(),
+        name: form.name.trim(),
+        vintage: form.vintage ? parseInt(form.vintage) : null,
+        varietal: form.varietal.trim(),
+        region: form.region.trim(),
+        quantity: parseInt(form.quantity),
+        estimatedPrice: parseFloat(form.estimatedPrice),
+        drinkWindow: form.drinkWindow.trim(),
+      });
+      setSaving(false);
+    };
+
+    const field = (label, key, props = {}) => (
+      <div>
+        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">{label}</label>
+        <input
+          value={form[key]}
+          onChange={set(key)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-gray-900 text-sm"
+          {...props}
+        />
+      </div>
+    );
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+        <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="border-b border-gray-200 p-6 flex justify-between items-center">
+            <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Add Wine</h2>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-3xl font-bold leading-none">×</button>
+          </div>
+          <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {field('Producer', 'producer', { required: true, placeholder: 'e.g. Cayuse Vineyards' })}
+              {field('Wine Name', 'name', { required: true, placeholder: 'e.g. Cailloux Vineyard' })}
+              {field('Vintage', 'vintage', { type: 'number', placeholder: 'Leave blank for NV', min: 1800, max: new Date().getFullYear() })}
+              {field('Varietal', 'varietal', { required: true, placeholder: 'e.g. Syrah' })}
+              {field('Quantity', 'quantity', { required: true, type: 'number', min: 1 })}
+              {field('Price per Bottle ($)', 'estimatedPrice', { required: true, type: 'number', min: 0, step: '0.01', placeholder: '0.00' })}
+            </div>
+            {field('Region', 'region', { required: true, placeholder: 'e.g. Walla Walla Valley, Washington' })}
+            {field('Drink Window', 'drinkWindow', { required: true, placeholder: 'e.g. 2024-2035', pattern: '\\d{4}-\\d{4}' })}
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-bold uppercase tracking-wider text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-bold uppercase tracking-wider bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50">
+                {saving ? 'Saving…' : 'Add Wine'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
   if (winesLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -558,6 +632,12 @@ Write only the tasting notes, no preamble.`
             <p className="text-gray-500 text-xs uppercase tracking-widest">Your Personal Collection</p>
           </div>
           <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowAddWine(true)}
+            className="px-5 py-2 text-sm font-bold uppercase tracking-wider bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            + Add Wine
+          </button>
           {/* View toggle */}
           <div className="flex rounded-lg overflow-hidden border border-gray-200 shadow-sm">
             <button
@@ -1012,6 +1092,8 @@ Write only the tasting notes, no preamble.`
 
         </>}
       </div>
+
+      {showAddWine && <AddWineModal onClose={() => setShowAddWine(false)} onSave={handleAddWine} />}
     </div>
   );
 };
