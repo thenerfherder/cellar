@@ -1,7 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import RackView from './RackView';
-import { WINE_DATA, TASTING_NOTES, DEFAULT_TASTING_NOTES, getPairingsForWine } from './data';
+import { TASTING_NOTES, DEFAULT_TASTING_NOTES, getPairingsForWine } from './data';
+import { useAuth } from './AuthContext';
+import { db } from './firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 // ============================================================================
 // CONSTANTS & DATA
@@ -102,6 +105,20 @@ const getWineKey = (wine) => `${wine.producer}-${wine.name}-${wine.vintage}`;
 // ============================================================================
 
 const WineCellar = () => {
+  const { user, signOut } = useAuth();
+  const [wineData, setWineData] = useState([]);
+  const [winesLoading, setWinesLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (snapshot) => {
+      const data = snapshot.data();
+      setWineData(data?.wines ?? []);
+      setWinesLoading(false);
+    });
+    return unsubscribe;
+  }, [user]);
+
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedVarietal, setSelectedVarietal] = useState(null);
   const [selectedDrinkability, setSelectedDrinkability] = useState(null);
@@ -118,20 +135,20 @@ const WineCellar = () => {
 
   // Memoized calculations
   const stats = useMemo(() => {
-    const totalBottles = WINE_DATA.reduce((sum, wine) => sum + wine.quantity, 0);
-    const totalValue = WINE_DATA.reduce((sum, wine) => sum + (wine.quantity * wine.estimatedPrice), 0);
-    const avgPrice = totalValue / totalBottles;
+    const totalBottles = wineData.reduce((sum, wine) => sum + wine.quantity, 0);
+    const totalValue = wineData.reduce((sum, wine) => sum + (wine.quantity * wine.estimatedPrice), 0);
+    const avgPrice = totalBottles > 0 ? totalValue / totalBottles : 0;
 
     return {
       totalBottles,
       totalValue,
       averagePrice: avgPrice,
-      uniqueVarietals: new Set(WINE_DATA.map(w => w.varietal)).size,
-      uniqueRegions: new Set(WINE_DATA.map(w => w.region)).size
+      uniqueVarietals: new Set(wineData.map(w => w.varietal)).size,
+      uniqueRegions: new Set(wineData.map(w => w.region)).size
     };
-  }, []);
+  }, [wineData]);
 
-  const sortedCellar = useMemo(() => sortWines(WINE_DATA), []);
+  const sortedCellar = useMemo(() => sortWines(wineData), [wineData]);
 
   const filteredCellar = useMemo(() => {
     let result = sortedCellar;
@@ -223,29 +240,29 @@ const WineCellar = () => {
   };
 
   const varietalData = useMemo(() =>
-    aggregateData(WINE_DATA, wine => wine.varietal, stats.totalBottles * CONFIG.OTHER_THRESHOLD),
-    [stats.totalBottles]
+    aggregateData(wineData, wine => wine.varietal, stats.totalBottles * CONFIG.OTHER_THRESHOLD),
+    [wineData, stats.totalBottles]
   );
 
   const regionData = useMemo(() =>
-    aggregateData(WINE_DATA, wine => extractCountry(wine.region), stats.totalBottles * CONFIG.OTHER_THRESHOLD),
-    [stats.totalBottles]
+    aggregateData(wineData, wine => extractCountry(wine.region), stats.totalBottles * CONFIG.OTHER_THRESHOLD),
+    [wineData, stats.totalBottles]
   );
 
   const vintageData = useMemo(() => {
     const map = {};
-    WINE_DATA.forEach(wine => {
+    wineData.forEach(wine => {
       const vintage = wine.vintage ? wine.vintage.toString() : 'NV';
       map[vintage] = (map[vintage] || 0) + wine.quantity;
     });
     return Object.entries(map)
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([name, value]) => ({ name, value }));
-  }, []);
+  }, [wineData]);
 
   const peakData = useMemo(() => {
     const map = {};
-    WINE_DATA.forEach(wine => {
+    wineData.forEach(wine => {
       const peak = getPeakYear(wine);
       const peakStr = peak ? peak.toString() : 'Unknown';
       map[peakStr] = (map[peakStr] || 0) + wine.quantity;
@@ -253,7 +270,7 @@ const WineCellar = () => {
     return Object.entries(map)
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([name, value]) => ({ name, value }));
-  }, []);
+  }, [wineData]);
 
   const drinkabilityData = useMemo(() => {
     const data = {
@@ -263,7 +280,7 @@ const WineCellar = () => {
       [DRINKABILITY_STATUS.AGE_5_PLUS]: 0
     };
 
-    WINE_DATA.forEach(wine => {
+    wineData.forEach(wine => {
       const status = getDrinkabilityStatus(wine);
       if (status) {
         data[status] += wine.quantity;
@@ -271,12 +288,12 @@ const WineCellar = () => {
     });
 
     return Object.entries(data).map(([name, value]) => ({ name, value }));
-  }, []);
+  }, [wineData]);
 
   const getCountryDetails = (country) => {
     if (!country || country === 'Other') return null;
     return {
-      wines: WINE_DATA.filter(wine =>
+      wines: wineData.filter(wine =>
         wine.region.toLowerCase().includes(country.toLowerCase())
       )
     };
@@ -288,21 +305,21 @@ const WineCellar = () => {
     if (varietal === 'Other') {
       const threshold = stats.totalBottles * CONFIG.OTHER_THRESHOLD;
       return {
-        wines: WINE_DATA.filter(wine => {
-          const count = WINE_DATA.filter(w => w.varietal === wine.varietal)
+        wines: wineData.filter(wine => {
+          const count = wineData.filter(w => w.varietal === wine.varietal)
             .reduce((sum, w) => sum + w.quantity, 0);
           return count < threshold;
         })
       };
     }
 
-    return { wines: WINE_DATA.filter(wine => wine.varietal === varietal) };
+    return { wines: wineData.filter(wine => wine.varietal === varietal) };
   };
 
   const getDrinkabilityDetails = (status) => {
     if (!status) return null;
     return {
-      wines: WINE_DATA.filter(wine => getDrinkabilityStatus(wine) === status)
+      wines: wineData.filter(wine => getDrinkabilityStatus(wine) === status)
     };
   };
 
@@ -311,12 +328,12 @@ const WineCellar = () => {
 
     if (showPeakView) {
       if (vintage === 'Unknown') {
-        return { wines: WINE_DATA.filter(wine => !getPeakYear(wine)) };
+        return { wines: wineData.filter(wine => !getPeakYear(wine)) };
       }
-      return { wines: WINE_DATA.filter(wine => getPeakYear(wine) === parseInt(vintage)) };
+      return { wines: wineData.filter(wine => getPeakYear(wine) === parseInt(vintage)) };
     } else {
-      if (vintage === 'NV') return { wines: WINE_DATA.filter(wine => wine.vintage === null) };
-      return { wines: WINE_DATA.filter(wine => wine.vintage === parseInt(vintage)) };
+      if (vintage === 'NV') return { wines: wineData.filter(wine => wine.vintage === null) };
+      return { wines: wineData.filter(wine => wine.vintage === parseInt(vintage)) };
     }
   };
 
@@ -524,6 +541,14 @@ Write only the tasting notes, no preamble.`
     </div>
   );
 
+  if (winesLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-gray-400 text-xs uppercase tracking-widest">Loading cellar…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -532,6 +557,7 @@ Write only the tasting notes, no preamble.`
             <h1 className="text-4xl font-black text-gray-900 mb-1 tracking-tight uppercase">CELLAR</h1>
             <p className="text-gray-500 text-xs uppercase tracking-widest">Your Personal Collection</p>
           </div>
+          <div className="flex items-center gap-3">
           {/* View toggle */}
           <div className="flex rounded-lg overflow-hidden border border-gray-200 shadow-sm">
             <button
@@ -555,10 +581,24 @@ Write only the tasting notes, no preamble.`
               Rack View
             </button>
           </div>
+          {/* User info + sign-out */}
+          <div className="flex items-center gap-2">
+            {user.photoURL && (
+              <img src={user.photoURL} alt="" className="w-7 h-7 rounded-full" referrerPolicy="no-referrer" />
+            )}
+            <span className="text-xs text-gray-500 hidden sm:block">{user.displayName || user.email}</span>
+            <button
+              onClick={signOut}
+              className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
+          </div>
         </div>
 
         {/* Rack View */}
-        {activeView === 'rack' && <RackView wines={WINE_DATA} colors={COLORS} />}
+        {activeView === 'rack' && <RackView wines={wineData} colors={COLORS} storageKey={`cellar_rack_layout_${user.uid}`} />}
 
         {/* Dashboard — Stats Cards */}
         {activeView === 'dashboard' && <>

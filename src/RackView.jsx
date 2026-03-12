@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 
-const STORAGE_KEY = 'cellar_rack_layout';
+const DEFAULT_STORAGE_KEY = 'cellar_rack_layout';
 
 // ── Bottle token (draggable circle representing one bottle) ──────────────────
 
@@ -104,13 +104,13 @@ const RackSlot = ({ row, col, occupant, wine, color, draggingKey, isHovered, onD
 
 // ── Main rack view ────────────────────────────────────────────────────────────
 
-const RackView = ({ wines, colors }) => {
+const RackView = ({ wines, colors, storageKey = DEFAULT_STORAGE_KEY }) => {
   const [rackRows, setRackRows] = useState(10);
   const [rackCols, setRackCols] = useState(12);
 
   const [rackLayout, setRackLayout] = useState(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(storageKey);
       return saved ? JSON.parse(saved) : {};
     } catch { return {}; }
   });
@@ -122,8 +122,8 @@ const RackView = ({ wines, colors }) => {
   const dragInfoRef = useRef(null);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(rackLayout));
-  }, [rackLayout]);
+    localStorage.setItem(storageKey, JSON.stringify(rackLayout));
+  }, [rackLayout, storageKey]);
 
   // Build varietal → color map
   const varietalColors = useMemo(() => {
