@@ -140,6 +140,14 @@ const WineCellar = () => {
     setShowAddWine(false);
   };
 
+  const handleDrinkBottle = async (wine, e) => {
+    e.stopPropagation();
+    const updated = wineData
+      .map(w => getWineKey(w) === getWineKey(wine) ? { ...w, quantity: w.quantity - 1 } : w)
+      .filter(w => w.quantity > 0);
+    await setDoc(doc(db, 'users', user.uid), { wines: updated }, { merge: true });
+  };
+
   // Memoized calculations
   const stats = useMemo(() => {
     const totalBottles = wineData.reduce((sum, wine) => sum + wine.quantity, 0);
@@ -848,6 +856,7 @@ Write only the tasting notes, no preamble.`
                   >
                     Drink Window {sortColumn === 'drinkability' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
+                  <th className="p-3"></th>
                 </tr>
               </thead>
               <tbody>
@@ -919,6 +928,14 @@ Write only the tasting notes, no preamble.`
                             Est. Peak: {getPeakYear(wine)}
                           </div>
                         </div>
+                      </td>
+                      <td className="p-3 text-right">
+                        <button
+                          onClick={(e) => handleDrinkBottle(wine, e)}
+                          className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-red-600 transition-colors px-2 py-1 rounded hover:bg-red-50"
+                        >
+                          Drink
+                        </button>
                       </td>
                     </tr>
                   );
