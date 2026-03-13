@@ -804,6 +804,7 @@ Write only the tasting notes, no preamble.`
             onRackRowsChange={(rows) => saveRackDimensions(rows, rackCols)}
             rackCols={rackCols}
             onRackColsChange={(cols) => saveRackDimensions(rackRows, cols)}
+            onWineClick={setSelectedWine}
           />
         )}
 
@@ -1181,6 +1182,27 @@ Write only the tasting notes, no preamble.`
                     <div className="text-lg font-bold text-gray-900">{selectedWine.drinkWindow}</div>
                     <div className="text-sm text-gray-500 mt-1">Est. Peak: {getPeakYear(selectedWine)}</div>
                   </div>
+                  {(() => {
+                    const wineIdx = wineData.findIndex(w => getWineKey(w) === getWineKey(selectedWine));
+                    const positions = Object.entries(rackLayout)
+                      .filter(([, occupant]) => occupant.wineIdx === wineIdx)
+                      .map(([pos]) => {
+                        const [row, col] = pos.split('-').map(Number);
+                        return String.fromCharCode(65 + col) + (row + 1);
+                      })
+                      .sort();
+                    if (positions.length === 0) return null;
+                    return (
+                      <div className="col-span-2">
+                        <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Rack Positions</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {positions.map(pos => (
+                            <span key={pos} className="px-2 py-0.5 bg-amber-100 text-amber-800 text-sm font-bold rounded font-mono">{pos}</span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 

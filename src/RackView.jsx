@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 
 // ── Bottle token (draggable circle representing one bottle) ──────────────────
 
-const BottleToken = ({ wine, wineIdx, bottleNum, source, posKey, color, isDragging, size = 44, onDragStart, onDragEnd, onTooltipShow, onTooltipMove, onTooltipHide }) => {
+const BottleToken = ({ wine, wineIdx, bottleNum, source, posKey, color, isDragging, size = 44, onDragStart, onDragEnd, onTooltipShow, onTooltipMove, onTooltipHide, onWineClick }) => {
   const initials = wine.producer
     .split(/\s+/)
     .filter(Boolean)
@@ -20,6 +20,7 @@ const BottleToken = ({ wine, wineIdx, bottleNum, source, posKey, color, isDraggi
         onDragStart?.({ wineIdx, bottleNum, source, posKey });
       }}
       onDragEnd={onDragEnd}
+      onClick={() => onWineClick?.(wine)}
       onMouseEnter={onTooltipShow}
       onMouseMove={onTooltipMove}
       onMouseLeave={onTooltipHide}
@@ -44,7 +45,7 @@ const BottleToken = ({ wine, wineIdx, bottleNum, source, posKey, color, isDraggi
 
 // ── Single rack slot (circular hole) ────────────────────────────────────────
 
-const RackSlot = ({ row, col, occupant, wine, color, draggingKey, isHovered, onDragOver, onDragLeave, onDrop, onBottleDragStart, onBottleDragEnd, onTooltipShow, onTooltipMove, onTooltipHide }) => {
+const RackSlot = ({ row, col, occupant, wine, color, draggingKey, isHovered, onDragOver, onDragLeave, onDrop, onBottleDragStart, onBottleDragEnd, onTooltipShow, onTooltipMove, onTooltipHide, onWineClick }) => {
   const posKey = `${row}-${col}`;
   const label = `${String.fromCharCode(65 + col)}${row + 1}`;
 
@@ -86,6 +87,7 @@ const RackSlot = ({ row, col, occupant, wine, color, draggingKey, isHovered, onD
           onTooltipShow={onTooltipShow}
           onTooltipMove={onTooltipMove}
           onTooltipHide={onTooltipHide}
+          onWineClick={onWineClick}
         />
       )}
 
@@ -102,7 +104,7 @@ const RackSlot = ({ row, col, occupant, wine, color, draggingKey, isHovered, onD
 
 // ── Main rack view ────────────────────────────────────────────────────────────
 
-const RackView = ({ wines, colors, rackLayout, onRackLayoutChange, rackRows, onRackRowsChange, rackCols, onRackColsChange }) => {
+const RackView = ({ wines, colors, rackLayout, onRackLayoutChange, rackRows, onRackRowsChange, rackCols, onRackColsChange, onWineClick }) => {
   const [draggingKey, setDraggingKey] = useState(null);
   const [hoveredSlot, setHoveredSlot] = useState(null);
   const [tooltip, setTooltip] = useState(null); // { wine, x, y }
@@ -298,6 +300,7 @@ const RackView = ({ wines, colors, rackLayout, onRackLayoutChange, rackRows, onR
                     onTooltipShow={ttHandlers.onTooltipShow}
                     onTooltipMove={ttHandlers.onTooltipMove}
                     onTooltipHide={ttHandlers.onTooltipHide}
+                    onWineClick={onWineClick}
                   />
                 );
               })}
