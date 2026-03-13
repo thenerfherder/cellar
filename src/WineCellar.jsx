@@ -513,9 +513,9 @@ Write only the tasting notes, no preamble.`
   // ============================================================================
 
   const StatCard = ({ label, value }) => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-      <p className="text-gray-500 text-xs uppercase tracking-widest mb-2 font-bold">{label}</p>
-      <p className="text-5xl font-black text-gray-900">{value}</p>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+      <p className="text-gray-500 text-xs uppercase tracking-widest mb-1 font-bold">{label}</p>
+      <p className="text-3xl font-black text-gray-900">{value}</p>
     </div>
   );
 
@@ -908,7 +908,7 @@ Write only the tasting notes, no preamble.`
         {activeView === 'dashboard' && <>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-5 gap-4 mb-12">
+        <div className="grid grid-cols-5 gap-3 mb-6">
           <StatCard label="Total Bottles" value={stats.totalBottles} />
           <StatCard
             label="Estimated Value"
@@ -923,39 +923,39 @@ Write only the tasting notes, no preamble.`
         </div>
 
         {/* Visualization Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
           {/* By Varietal */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-2xl font-black text-gray-900 mb-6 uppercase tracking-tight">By Varietal</h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Varietal</h2>
             <SegmentedBarWithLegend data={varietalData} onClick={setSelectedVarietal} />
           </div>
 
           {/* By Country/Region */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-2xl font-black text-gray-900 mb-6 uppercase tracking-tight">By Country/Region</h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Country/Region</h2>
             <SegmentedBarWithLegend data={regionData} onClick={setSelectedCountry} />
           </div>
 
           {/* Drinkability */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-2xl font-black text-gray-900 mb-6 uppercase tracking-tight">Drinkability</h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">Drinkability</h2>
             <SegmentedBarWithLegend data={drinkabilityData} onClick={setSelectedDrinkability} />
           </div>
 
           {/* By Vintage / By Peak */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-sm font-black text-gray-900 uppercase tracking-tight">
                 {showPeakView ? 'By Peak Year' : 'By Vintage'}
               </h2>
               <button
                 onClick={() => setShowPeakView(!showPeakView)}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs uppercase tracking-wider rounded-lg transition-colors"
+                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs uppercase tracking-wider rounded-lg transition-colors"
               >
                 {showPeakView ? 'Show Vintage' : 'Show Peak'}
               </button>
             </div>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={showPeakView ? peakData : vintageData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
@@ -976,15 +976,15 @@ Write only the tasting notes, no preamble.`
         </div>
 
         {/* Complete Collection Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="mb-6">
-            <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-4">Complete Collection</h2>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="mb-4">
+            <h2 className="text-sm font-black text-gray-900 uppercase tracking-tight mb-3">Complete Collection</h2>
 
             {/* Quick Filters */}
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-2 mb-2">
               <button
                 onClick={() => setActiveFilter(activeFilter === 'ready' ? null : 'ready')}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
                   activeFilter === 'ready' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -993,7 +993,7 @@ Write only the tasting notes, no preamble.`
 
               <button
                 onClick={() => setActiveFilter(activeFilter === 'atOrPastPeak' ? null : 'atOrPastPeak')}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
                   activeFilter === 'atOrPastPeak' ? 'bg-orange-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -1002,7 +1002,7 @@ Write only the tasting notes, no preamble.`
 
               <button
                 onClick={() => setActiveFilter(activeFilter === 'notReady' ? null : 'notReady')}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
                   activeFilter === 'notReady' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -1044,35 +1044,35 @@ Write only the tasting notes, no preamble.`
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b-2 border-gray-900">
-                  <th className="p-3 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Producer</th>
-                  <th className="p-3 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Wine</th>
-                  <th className="p-3 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Varietal</th>
-                  <th className="p-3 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Region</th>
+                  <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Producer</th>
+                  <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Wine</th>
+                  <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Varietal</th>
+                  <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Region</th>
                   <th
-                    className="p-3 font-black text-gray-900 text-xs uppercase tracking-wider text-left cursor-pointer hover:bg-gray-50 select-none"
+                    className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left cursor-pointer hover:bg-gray-50 select-none"
                     onClick={() => handleSort('vintage')}
                   >
                     Vintage {sortColumn === 'vintage' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th
-                    className="p-3 font-black text-gray-900 text-xs uppercase tracking-wider text-center cursor-pointer hover:bg-gray-50 select-none"
+                    className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-center cursor-pointer hover:bg-gray-50 select-none"
                     onClick={() => handleSort('quantity')}
                   >
                     Qty {sortColumn === 'quantity' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th
-                    className="p-3 font-black text-gray-900 text-xs uppercase tracking-wider text-right cursor-pointer hover:bg-gray-50 select-none"
+                    className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-right cursor-pointer hover:bg-gray-50 select-none"
                     onClick={() => handleSort('price')}
                   >
                     Price {sortColumn === 'price' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
                   <th
-                    className="p-3 font-black text-gray-900 text-xs uppercase tracking-wider text-left cursor-pointer hover:bg-gray-50 select-none"
+                    className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left cursor-pointer hover:bg-gray-50 select-none"
                     onClick={() => handleSort('drinkability')}
                   >
                     Drink Window {sortColumn === 'drinkability' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="p-3"></th>
+                  <th className="px-2 py-2"></th>
                 </tr>
               </thead>
               <tbody>
@@ -1082,9 +1082,21 @@ Write only the tasting notes, no preamble.`
 
                   const useGrouping = !sortColumn;
                   const prevWine = useGrouping && index > 0 ? filteredCellar[index - 1] : null;
+                  const isNewProducerGroup = !useGrouping || !prevWine || prevWine.producer !== wine.producer;
                   const isNewGroup = !useGrouping || !prevWine ||
                     prevWine.producer !== wine.producer ||
                     prevWine.name !== wine.name;
+
+                  let producerRowspan = 1;
+                  if (useGrouping && isNewProducerGroup) {
+                    for (let i = index + 1; i < filteredCellar.length; i++) {
+                      if (filteredCellar[i].producer === wine.producer) {
+                        producerRowspan++;
+                      } else {
+                        break;
+                      }
+                    }
+                  }
 
                   let rowspan = 1;
                   if (useGrouping && isNewGroup) {
@@ -1107,31 +1119,33 @@ Write only the tasting notes, no preamble.`
                           : isFinalYear
                           ? 'bg-red-50 border-red-200 hover:bg-red-100'
                           : 'border-gray-100 hover:bg-gray-50'
-                      } ${isNewGroup ? 'border-t-2 border-t-gray-300' : ''}`}
+                      } ${isNewProducerGroup ? 'border-t-2 border-t-gray-300' : ''}`}
                       onClick={() => setSelectedWine(wine)}
                     >
+                      {(isNewProducerGroup || !useGrouping) && (
+                        <td className="px-2 py-1.5 text-gray-900 font-medium align-top text-sm" rowSpan={useGrouping ? producerRowspan : 1}>
+                          <div className="flex items-center gap-2">
+                            {wine.producer}
+                            {isSpecial && (
+                              <span className="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded uppercase">
+                                Special
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      )}
                       {(isNewGroup || !useGrouping) && (
                         <>
-                          <td className="p-3 text-gray-900 font-medium align-top" rowSpan={useGrouping ? rowspan : 1}>
-                            <div className="flex items-center gap-2">
-                              {wine.producer}
-                              {isSpecial && (
-                                <span className="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded uppercase">
-                                  Special
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-3 text-gray-900 font-semibold align-top" rowSpan={useGrouping ? rowspan : 1}>{wine.name}</td>
-                          <td className="p-3 text-gray-700 align-top" rowSpan={useGrouping ? rowspan : 1}>{wine.varietal}</td>
-                          <td className="p-3 text-gray-700 align-top" rowSpan={useGrouping ? rowspan : 1}>{wine.region}</td>
+                          <td className="px-2 py-1.5 text-gray-900 font-semibold align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.name}</td>
+                          <td className="px-2 py-1.5 text-gray-700 align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.varietal}</td>
+                          <td className="px-2 py-1.5 text-gray-700 align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.region}</td>
                         </>
                       )}
-                      <td className="p-3 text-gray-700">{wine.vintage || 'NV'}</td>
-                      <td className="p-3 text-gray-900 text-center font-bold">{wine.quantity}</td>
-                      <td className="p-3 text-gray-700 text-right">${wine.estimatedPrice.toFixed(2)}</td>
-                      <td className="p-3 text-gray-700">
-                        <div className="flex flex-col gap-1">
+                      <td className="px-2 py-1.5 text-gray-700 text-sm">{wine.vintage || 'NV'}</td>
+                      <td className="px-2 py-1.5 text-gray-900 text-center font-bold text-sm">{wine.quantity}</td>
+                      <td className="px-2 py-1.5 text-gray-700 text-right text-sm">${wine.estimatedPrice.toFixed(2)}</td>
+                      <td className="px-2 py-1.5 text-gray-700 text-sm">
+                        <div className="flex flex-col gap-0.5">
                           <div className="flex items-center gap-2">
                             {wine.drinkWindow}
                             {isFinalYear && (
@@ -1140,12 +1154,12 @@ Write only the tasting notes, no preamble.`
                               </span>
                             )}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            Est. Peak: {getPeakYear(wine)}
+                          <div className="text-xs text-gray-400">
+                            Peak: {getPeakYear(wine)}
                           </div>
                         </div>
                       </td>
-                      <td className="p-3 text-right">
+                      <td className="px-2 py-1.5 text-right">
                         <button
                           onClick={(e) => handleDrinkBottle(wine, e)}
                           className="text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-red-600 transition-colors px-2 py-1 rounded hover:bg-red-50"
