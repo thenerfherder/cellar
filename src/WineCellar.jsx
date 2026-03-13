@@ -100,6 +100,26 @@ const getPeakYear = (wine) => {
 
 const getWineKey = (wine) => `${wine.producer}-${wine.name}-${wine.vintage}`;
 
+const VARIETALS = {
+  'Red': [
+    'Barbera', 'Cabernet Franc', 'Cabernet Sauvignon', 'Gamay', 'Grenache',
+    'Malbec', 'Merlot', 'Mourvèdre', 'Nebbiolo', 'Petit Verdot', 'Petite Sirah',
+    'Pinot Noir', 'Sangiovese', 'Syrah', 'Tempranillo', 'Zinfandel',
+  ],
+  'White': [
+    'Albariño', 'Chardonnay', 'Chenin Blanc', 'Gewürztraminer', 'Grüner Veltliner',
+    'Marsanne', 'Muscat', 'Pinot Gris', 'Riesling', 'Roussanne',
+    'Sauvignon Blanc', 'Viognier',
+  ],
+  'Rosé': ['Rosé'],
+  'Blends': [
+    'Bordeaux Blend', 'Cabernet Sauvignon Blend', 'Côtes du Rhône Red',
+    'Grenache Blend', 'GSM Blend', 'Meritage', 'Red Blend', 'Rhône Blend', 'White Blend',
+  ],
+  'Sparkling': ['Champagne Blend', 'Crémant', 'Prosecco', 'Sparkling Wine'],
+  'Dessert & Fortified': ['Late Harvest Riesling', 'Port', 'Sauternes', 'Sherry'],
+};
+
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
@@ -151,11 +171,33 @@ const WineCellar = () => {
   const [showPeakView, setShowPeakView] = useState(false);
   const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'rack'
   const [showAddWine, setShowAddWine] = useState(false);
+  const [showEditWine, setShowEditWine] = useState(null); // wine object being edited
 
   const handleAddWine = async (wine) => {
     const updated = [...wineData, wine];
     await setDoc(doc(db, 'users', user.uid), { wines: updated }, { merge: true });
     setShowAddWine(false);
+  };
+
+  const handleEditWine = async (originalWine, updatedWine) => {
+    const origIdx = wineData.findIndex(w => getWineKey(w) === getWineKey(originalWine));
+    if (origIdx === -1) return;
+    const updatedWines = wineData.map((w, i) => i === origIdx ? updatedWine : w);
+
+    // If quantity was reduced, remove now-invalid rack entries for this wine
+    let updatedRack = rackLayout;
+    if (updatedWine.quantity < originalWine.quantity) {
+      const newRack = {};
+      Object.entries(rackLayout).forEach(([pos, occupant]) => {
+        if (occupant.wineIdx === origIdx && occupant.bottleNum > updatedWine.quantity) return;
+        newRack[pos] = occupant;
+      });
+      updatedRack = newRack;
+    }
+
+    await setDoc(doc(db, 'users', user.uid), { wines: updatedWines, rackLayout: updatedRack }, { merge: true });
+    setShowEditWine(null);
+    setSelectedWine(updatedWine);
   };
 
   const handleDrinkBottle = async (wine, e) => {
@@ -598,9 +640,18 @@ Write only the tasting notes, no preamble.`
     </div>
   );
 
-  const AddWineModal = ({ onClose, onSave }) => {
+  const AddWineModal = ({ onClose, onSave, initialWine }) => {
     const empty = { producer: '', name: '', vintage: '', varietal: '', region: '', quantity: '1', estimatedPrice: '', drinkWindow: '' };
-    const [form, setForm] = useState(empty);
+    const [form, setForm] = useState(() => initialWine ? {
+      producer: initialWine.producer,
+      name: initialWine.name,
+      vintage: initialWine.vintage != null ? String(initialWine.vintage) : '',
+      varietal: initialWine.varietal,
+      region: initialWine.region,
+      quantity: String(initialWine.quantity),
+      estimatedPrice: String(initialWine.estimatedPrice),
+      drinkWindow: initialWine.drinkWindow,
+    } : empty);
     const [saving, setSaving] = useState(false);
 
     const set = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
@@ -612,7 +663,7 @@ Write only the tasting notes, no preamble.`
         producer: form.producer.trim(),
         name: form.name.trim(),
         vintage: form.vintage ? parseInt(form.vintage) : null,
-        varietal: form.varietal.trim(),
+        varietal: form.varietal,
         region: form.region.trim(),
         quantity: parseInt(form.quantity),
         estimatedPrice: parseFloat(form.estimatedPrice),
@@ -637,7 +688,7 @@ Write only the tasting notes, no preamble.`
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
         <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
           <div className="border-b border-gray-200 p-6 flex justify-between items-center">
-            <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Add Wine</h2>
+            <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">{initialWine ? 'Edit Wine' : 'Add Wine'}</h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-3xl font-bold leading-none">×</button>
           </div>
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -645,7 +696,22 @@ Write only the tasting notes, no preamble.`
               {field('Producer', 'producer', { required: true, placeholder: 'e.g. Cayuse Vineyards' })}
               {field('Wine Name', 'name', { required: true, placeholder: 'e.g. Cailloux Vineyard' })}
               {field('Vintage', 'vintage', { type: 'number', placeholder: 'Leave blank for NV', min: 1800, max: new Date().getFullYear() })}
-              {field('Varietal', 'varietal', { required: true, placeholder: 'e.g. Syrah' })}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Varietal</label>
+                <select
+                  required
+                  value={form.varietal}
+                  onChange={set('varietal')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-gray-900 text-sm bg-white"
+                >
+                  <option value="" disabled>Select a varietal…</option>
+                  {Object.entries(VARIETALS).map(([group, options]) => (
+                    <optgroup key={group} label={group}>
+                      {options.map(v => <option key={v} value={v}>{v}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
               {field('Quantity', 'quantity', { required: true, type: 'number', min: 1 })}
               {field('Price per Bottle ($)', 'estimatedPrice', { required: true, type: 'number', min: 0, step: '0.01', placeholder: '0.00' })}
             </div>
@@ -656,7 +722,7 @@ Write only the tasting notes, no preamble.`
                 Cancel
               </button>
               <button type="submit" disabled={saving} className="px-5 py-2 text-sm font-bold uppercase tracking-wider bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50">
-                {saving ? 'Saving…' : 'Add Wine'}
+                {saving ? 'Saving…' : initialWine ? 'Save Changes' : 'Add Wine'}
               </button>
             </div>
           </form>
@@ -1080,7 +1146,15 @@ Write only the tasting notes, no preamble.`
           {selectedWine && (
             <div className="space-y-6">
               <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="text-lg font-black text-gray-900 mb-4 uppercase">Details</h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-black text-gray-900 uppercase">Details</h3>
+                  <button
+                    onClick={() => setShowEditWine(selectedWine)}
+                    className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-600 border border-gray-300 rounded-lg hover:text-gray-900 hover:border-gray-500 transition-colors"
+                  >
+                    Edit
+                  </button>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Vintage</div>
@@ -1164,6 +1238,13 @@ Write only the tasting notes, no preamble.`
       </div>
 
       {showAddWine && <AddWineModal onClose={() => setShowAddWine(false)} onSave={handleAddWine} />}
+      {showEditWine && (
+        <AddWineModal
+          onClose={() => setShowEditWine(null)}
+          onSave={(updated) => handleEditWine(showEditWine, updated)}
+          initialWine={showEditWine}
+        />
+      )}
     </div>
   );
 };
