@@ -35,7 +35,6 @@ const DRINKABILITY_STATUS = {
 // UTILITY FUNCTIONS
 // ============================================================================
 
-const extractCountry = (region) => region.split(',').slice(-1)[0].trim();
 
 const sortWines = (wines) => [...wines].sort((a, b) => {
   const producerCompare = a.producer.localeCompare(b.producer);
@@ -118,6 +117,21 @@ const VARIETALS = {
   ],
   'Sparkling': ['Champagne Blend', 'Crémant', 'Prosecco', 'Sparkling Wine'],
   'Dessert & Fortified': ['Late Harvest Riesling', 'Port', 'Sauternes', 'Sherry'],
+};
+
+const WINE_REGIONS = {
+  'Argentina': ['Luján de Cuyo', 'Mendoza', 'Patagonia', 'Salta', 'San Juan'],
+  'Australia': ['Barossa Valley', 'Clare Valley', 'Coonawarra', 'Eden Valley', 'Hunter Valley', 'Margaret River', 'McLaren Vale', 'Yarra Valley'],
+  'Austria': ['Burgenland', 'Kamptal', 'Kremstal', 'Styria', 'Wachau'],
+  'Chile': ['Aconcagua Valley', 'Bío Bío', 'Casablanca Valley', 'Colchagua Valley', 'Elqui Valley', 'Maipo Valley'],
+  'France': ['Alsace', 'Beaujolais', 'Bordeaux', 'Burgundy', 'Champagne', 'Corsica', 'Languedoc-Roussillon', 'Loire Valley', 'Provence', 'Rhône Valley'],
+  'Germany': ['Baden', 'Mosel', 'Nahe', 'Pfalz', 'Rheingau', 'Rheinhessen'],
+  'Italy': ['Campania', 'Friuli-Venezia Giulia', 'Piedmont', 'Sardinia', 'Sicily', 'Tuscany', 'Umbria', 'Veneto'],
+  'New Zealand': ['Central Otago', "Hawke's Bay", 'Marlborough', 'Martinborough', 'Nelson'],
+  'Portugal': ['Alentejo', 'Bairrada', 'Dão', 'Douro', 'Vinho Verde'],
+  'South Africa': ['Franschhoek', 'Paarl', 'Stellenbosch', 'Swartland', 'Walker Bay'],
+  'Spain': ['Cava', 'Galicia', 'Jerez', 'Navarra', 'Priorat', 'Ribera del Duero', 'Rioja'],
+  'USA': ['California', 'New York', 'Oregon', 'Virginia', 'Washington'],
 };
 
 // ============================================================================
@@ -251,7 +265,7 @@ const WineCellar = () => {
       totalValue,
       averagePrice: avgPrice,
       uniqueVarietals: new Set(wineData.map(w => w.varietal)).size,
-      uniqueRegions: new Set(wineData.map(w => w.region)).size
+      uniqueCountries: new Set(wineData.map(w => w.country)).size
     };
   }, [wineData]);
 
@@ -352,7 +366,7 @@ const WineCellar = () => {
   );
 
   const regionData = useMemo(() =>
-    aggregateData(wineData, wine => extractCountry(wine.region), stats.totalBottles * CONFIG.OTHER_THRESHOLD),
+    aggregateData(wineData, wine => wine.country, stats.totalBottles * CONFIG.OTHER_THRESHOLD),
     [wineData, stats.totalBottles]
   );
 
@@ -399,11 +413,7 @@ const WineCellar = () => {
 
   const getCountryDetails = (country) => {
     if (!country || country === 'Other') return null;
-    return {
-      wines: wineData.filter(wine =>
-        wine.region.toLowerCase().includes(country.toLowerCase())
-      )
-    };
+    return { wines: wineData.filter(wine => wine.country === country) };
   };
 
   const getVarietalDetails = (varietal) => {
@@ -475,7 +485,8 @@ Producer: ${wine.producer}
 Wine: ${wine.name}
 Vintage: ${wine.vintage || 'Non-Vintage'}
 Varietal: ${wine.varietal}
-Region: ${wine.region}
+Country: ${wine.country}
+State/Region: ${wine.state}
 Price: ${wine.estimatedPrice}
 
 Write 2-3 sentences of professional tasting notes that are specific to this producer, wine, and vintage. Consider:
@@ -588,7 +599,7 @@ Write only the tasting notes, no preamble.`
             </div>
             <div className="text-gray-700 font-semibold">{wine.name}</div>
             <div className="text-sm text-gray-600 mt-1">
-              {wine.vintage || 'NV'} • {wine.varietal} • {wine.region}
+              {wine.vintage || 'NV'} • {wine.varietal} • {wine.state}, {wine.country}
             </div>
             {showDrinkWindow && (
               <div className="text-sm text-gray-500 mt-1">
@@ -705,13 +716,14 @@ Write only the tasting notes, no preamble.`
   };
 
   const AddWineModal = ({ onClose, onSave, initialWine }) => {
-    const empty = { producer: '', name: '', vintage: '', varietal: '', region: '', quantity: '1', estimatedPrice: '', drinkWindow: '' };
+    const empty = { producer: '', name: '', vintage: '', varietal: '', country: '', state: '', quantity: '1', estimatedPrice: '', drinkWindow: '' };
     const [form, setForm] = useState(() => initialWine ? {
       producer: initialWine.producer,
       name: initialWine.name,
       vintage: initialWine.vintage != null ? String(initialWine.vintage) : '',
       varietal: initialWine.varietal,
-      region: initialWine.region,
+      country: initialWine.country ?? '',
+      state: initialWine.state ?? '',
       quantity: String(initialWine.quantity),
       estimatedPrice: String(initialWine.estimatedPrice),
       drinkWindow: initialWine.drinkWindow,
@@ -719,6 +731,7 @@ Write only the tasting notes, no preamble.`
     const [saving, setSaving] = useState(false);
 
     const set = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
+    const setCountry = (e) => setForm(prev => ({ ...prev, country: e.target.value, state: '' }));
 
     const handleSubmit = async (e) => {
       e.preventDefault();
@@ -728,7 +741,8 @@ Write only the tasting notes, no preamble.`
         name: form.name.trim(),
         vintage: form.vintage ? parseInt(form.vintage) : null,
         varietal: form.varietal,
-        region: form.region.trim(),
+        country: form.country,
+        state: form.state,
         quantity: parseInt(form.quantity),
         estimatedPrice: parseFloat(form.estimatedPrice),
         drinkWindow: form.drinkWindow.trim(),
@@ -779,7 +793,33 @@ Write only the tasting notes, no preamble.`
               {field('Quantity', 'quantity', { required: true, type: 'number', min: 1 })}
               {field('Price per Bottle ($)', 'estimatedPrice', { required: true, type: 'number', min: 0, step: '0.01', placeholder: '0.00' })}
             </div>
-            {field('Region', 'region', { required: true, placeholder: 'e.g. Walla Walla Valley, Washington' })}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Country</label>
+                <select
+                  required
+                  value={form.country}
+                  onChange={setCountry}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-gray-900 text-sm bg-white"
+                >
+                  <option value="" disabled>Select country…</option>
+                  {Object.keys(WINE_REGIONS).sort().map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">State / Region</label>
+                <select
+                  required
+                  value={form.state}
+                  onChange={set('state')}
+                  disabled={!form.country}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-gray-900 text-sm bg-white disabled:opacity-40"
+                >
+                  <option value="" disabled>Select state…</option>
+                  {(WINE_REGIONS[form.country] ?? []).map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
             {field('Drink Window', 'drinkWindow', { required: true, placeholder: 'e.g. 2024-2035', pattern: '\\d{4}-\\d{4}' })}
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-bold uppercase tracking-wider text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors">
@@ -919,7 +959,7 @@ Write only the tasting notes, no preamble.`
             value={<><span style={{fontSize: '1em'}}>$</span>{Math.round(stats.averagePrice)}</>}
           />
           <StatCard label="Varietals" value={stats.uniqueVarietals} />
-          <StatCard label="Regions" value={stats.uniqueRegions} />
+          <StatCard label="Countries" value={stats.uniqueCountries} />
         </div>
 
         {/* Visualization Grid */}
@@ -930,9 +970,9 @@ Write only the tasting notes, no preamble.`
             <SegmentedBarWithLegend data={varietalData} onClick={setSelectedVarietal} />
           </div>
 
-          {/* By Country/Region */}
+          {/* By Country */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Country/Region</h2>
+            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Country</h2>
             <SegmentedBarWithLegend data={regionData} onClick={setSelectedCountry} />
           </div>
 
@@ -1047,7 +1087,8 @@ Write only the tasting notes, no preamble.`
                   <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Producer</th>
                   <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Wine</th>
                   <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Varietal</th>
-                  <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Region</th>
+                  <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Country</th>
+                  <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">State</th>
                   <th
                     className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left cursor-pointer hover:bg-gray-50 select-none"
                     onClick={() => handleSort('vintage')}
@@ -1138,7 +1179,8 @@ Write only the tasting notes, no preamble.`
                         <>
                           <td className="px-2 py-1.5 text-gray-900 font-semibold align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.name}</td>
                           <td className="px-2 py-1.5 text-gray-700 align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.varietal}</td>
-                          <td className="px-2 py-1.5 text-gray-700 align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.region}</td>
+                          <td className="px-2 py-1.5 text-gray-700 align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.country}</td>
+                          <td className="px-2 py-1.5 text-gray-700 align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.state}</td>
                         </>
                       )}
                       <td className="px-2 py-1.5 text-gray-700 text-sm">{wine.vintage || 'NV'}</td>
@@ -1279,8 +1321,12 @@ Write only the tasting notes, no preamble.`
                   <div className="text-lg font-bold text-gray-900">{selectedWine.varietal}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Region</div>
-                  <div className="text-lg font-bold text-gray-900">{selectedWine.region}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Country</div>
+                  <div className="text-lg font-bold text-gray-900">{selectedWine.country}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">State / Region</div>
+                  <div className="text-lg font-bold text-gray-900">{selectedWine.state}</div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Quantity</div>
