@@ -899,6 +899,7 @@ Write only the tasting notes, no preamble.`
               rackCols={activeRack.cols}
               onRackColsChange={(cols) => updateActiveRack({ cols })}
               onWineClick={setSelectedWine}
+              allRackLayouts={racks.map(r => r.layout)}
             />
           </>
         )}
@@ -1224,138 +1225,138 @@ Write only the tasting notes, no preamble.`
           )}
         </DetailModal>
 
-        <DetailModal
-          isOpen={!!selectedWine}
-          onClose={() => setSelectedWine(null)}
-          title={
-            <div className="flex items-center gap-2">
-              <span>{selectedWine?.name}</span>
-              {selectedWine && isSpecialBottle(selectedWine) && (
-                <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded uppercase">
-                  Special
-                </span>
-              )}
-            </div>
-          }
-          subtitle={selectedWine?.producer}
-        >
-          {selectedWine && (
-            <div className="space-y-6">
-              <div className="bg-gray-50 rounded-lg p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-black text-gray-900 uppercase">Details</h3>
-                  <button
-                    onClick={() => setShowEditWine(selectedWine)}
-                    className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-600 border border-gray-300 rounded-lg hover:text-gray-900 hover:border-gray-500 transition-colors"
-                  >
-                    Edit
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Vintage</div>
-                    <div className="text-lg font-bold text-gray-900">{selectedWine.vintage || 'NV'}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Varietal</div>
-                    <div className="text-lg font-bold text-gray-900">{selectedWine.varietal}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Region</div>
-                    <div className="text-lg font-bold text-gray-900">{selectedWine.region}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Quantity</div>
-                    <div className="text-lg font-bold text-gray-900">{selectedWine.quantity} bottles</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Price</div>
-                    <div className="text-lg font-bold text-gray-900">${selectedWine.estimatedPrice.toFixed(2)}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Drink Window</div>
-                    <div className="text-lg font-bold text-gray-900">{selectedWine.drinkWindow}</div>
-                    <div className="text-sm text-gray-500 mt-1">Est. Peak: {getPeakYear(selectedWine)}</div>
-                  </div>
-                  {(() => {
-                    const wineIdx = wineData.findIndex(w => getWineKey(w) === getWineKey(selectedWine));
-                    const positions = racks.flatMap(rack =>
-                      Object.entries(rack.layout)
-                        .filter(([, occupant]) => occupant.wineIdx === wineIdx)
-                        .map(([pos]) => {
-                          const [row, col] = pos.split('-').map(Number);
-                          return { label: String.fromCharCode(65 + col) + (row + 1), rackName: rack.name };
-                        })
-                    ).sort((a, b) => a.rackName.localeCompare(b.rackName) || a.label.localeCompare(b.label));
-                    if (positions.length === 0) return null;
-                    return (
-                      <div className="col-span-2">
-                        <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Rack Positions</div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {positions.map(({ label, rackName }, i) => (
-                            <span key={i} className="px-2 py-0.5 bg-amber-100 text-amber-800 text-sm font-bold rounded font-mono" title={rackName}>
-                              {racks.length > 1 ? `${rackName}: ` : ''}{label}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              <div className="bg-blue-50 rounded-lg p-6">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-lg font-black text-gray-900 uppercase">Tasting Notes</h3>
-                  <button
-                    onClick={async () => {
-                      const wineKey = getWineKey(selectedWine);
-                      if (!generatedNotes[wineKey]) {
-                        await generateAITastingNotes(selectedWine);
-                      }
-                    }}
-                    disabled={loadingNoteFor === getWineKey(selectedWine)}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
-                      generatedNotes[getWineKey(selectedWine)]
-                        ? 'bg-green-600 text-white cursor-default'
-                        : loadingNoteFor === getWineKey(selectedWine)
-                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
-                    }`}
-                  >
-                    {loadingNoteFor === getWineKey(selectedWine)
-                      ? 'Generating...'
-                      : generatedNotes[getWineKey(selectedWine)]
-                      ? '✓ AI Notes'
-                      : 'Generate AI Notes'}
-                  </button>
-                </div>
-                <p className="text-gray-700 leading-relaxed">
-                  {generatedNotes[getWineKey(selectedWine)] ||
-                   TASTING_NOTES[selectedWine.varietal] ||
-                    DEFAULT_TASTING_NOTES}
-                </p>
-              </div>
-
-              <div className="bg-green-50 rounded-lg p-6">
-                <h3 className="text-lg font-black text-gray-900 mb-3 uppercase">Perfect Pairings</h3>
-                <div className="flex flex-wrap gap-2">
-                  {getPairingsForWine(selectedWine).map((pairing, idx) => (
-                    <span
-                      key={idx}
-                      className="bg-white px-4 py-2 rounded-full text-sm font-semibold text-gray-700 border border-gray-200"
-                    >
-                      {pairing}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </DetailModal>
-
         </>}
       </div>
+
+      <DetailModal
+        isOpen={!!selectedWine}
+        onClose={() => setSelectedWine(null)}
+        title={
+          <div className="flex items-center gap-2">
+            <span>{selectedWine?.name}</span>
+            {selectedWine && isSpecialBottle(selectedWine) && (
+              <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded uppercase">
+                Special
+              </span>
+            )}
+          </div>
+        }
+        subtitle={selectedWine?.producer}
+      >
+        {selectedWine && (
+          <div className="space-y-6">
+            <div className="bg-gray-50 rounded-lg p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-black text-gray-900 uppercase">Details</h3>
+                <button
+                  onClick={() => setShowEditWine(selectedWine)}
+                  className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-600 border border-gray-300 rounded-lg hover:text-gray-900 hover:border-gray-500 transition-colors"
+                >
+                  Edit
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Vintage</div>
+                  <div className="text-lg font-bold text-gray-900">{selectedWine.vintage || 'NV'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Varietal</div>
+                  <div className="text-lg font-bold text-gray-900">{selectedWine.varietal}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Region</div>
+                  <div className="text-lg font-bold text-gray-900">{selectedWine.region}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Quantity</div>
+                  <div className="text-lg font-bold text-gray-900">{selectedWine.quantity} bottles</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Price</div>
+                  <div className="text-lg font-bold text-gray-900">${selectedWine.estimatedPrice.toFixed(2)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Drink Window</div>
+                  <div className="text-lg font-bold text-gray-900">{selectedWine.drinkWindow}</div>
+                  <div className="text-sm text-gray-500 mt-1">Est. Peak: {getPeakYear(selectedWine)}</div>
+                </div>
+                {(() => {
+                  const wineIdx = wineData.findIndex(w => getWineKey(w) === getWineKey(selectedWine));
+                  const positions = racks.flatMap(rack =>
+                    Object.entries(rack.layout)
+                      .filter(([, occupant]) => occupant.wineIdx === wineIdx)
+                      .map(([pos]) => {
+                        const [row, col] = pos.split('-').map(Number);
+                        return { label: String.fromCharCode(65 + col) + (row + 1), rackName: rack.name };
+                      })
+                  ).sort((a, b) => a.rackName.localeCompare(b.rackName) || a.label.localeCompare(b.label));
+                  if (positions.length === 0) return null;
+                  return (
+                    <div className="col-span-2">
+                      <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Rack Positions</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {positions.map(({ label, rackName }, i) => (
+                          <span key={i} className="px-2 py-0.5 bg-amber-100 text-amber-800 text-sm font-bold rounded font-mono" title={rackName}>
+                            {racks.length > 1 ? `${rackName}: ` : ''}{label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-black text-gray-900 uppercase">Tasting Notes</h3>
+                <button
+                  onClick={async () => {
+                    const wineKey = getWineKey(selectedWine);
+                    if (!generatedNotes[wineKey]) {
+                      await generateAITastingNotes(selectedWine);
+                    }
+                  }}
+                  disabled={loadingNoteFor === getWineKey(selectedWine)}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
+                    generatedNotes[getWineKey(selectedWine)]
+                      ? 'bg-green-600 text-white cursor-default'
+                      : loadingNoteFor === getWineKey(selectedWine)
+                      ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                      : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+                  }`}
+                >
+                  {loadingNoteFor === getWineKey(selectedWine)
+                    ? 'Generating...'
+                    : generatedNotes[getWineKey(selectedWine)]
+                    ? '✓ AI Notes'
+                    : 'Generate AI Notes'}
+                </button>
+              </div>
+              <p className="text-gray-700 leading-relaxed">
+                {generatedNotes[getWineKey(selectedWine)] ||
+                 TASTING_NOTES[selectedWine.varietal] ||
+                  DEFAULT_TASTING_NOTES}
+              </p>
+            </div>
+
+            <div className="bg-green-50 rounded-lg p-6">
+              <h3 className="text-lg font-black text-gray-900 mb-3 uppercase">Perfect Pairings</h3>
+              <div className="flex flex-wrap gap-2">
+                {getPairingsForWine(selectedWine).map((pairing, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-white px-4 py-2 rounded-full text-sm font-semibold text-gray-700 border border-gray-200"
+                  >
+                    {pairing}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </DetailModal>
 
       {showAddWine && <AddWineModal onClose={() => setShowAddWine(false)} onSave={handleAddWine} />}
       {showEditWine && (

@@ -104,7 +104,7 @@ const RackSlot = ({ row, col, occupant, wine, color, draggingKey, isHovered, onD
 
 // ── Main rack view ────────────────────────────────────────────────────────────
 
-const RackView = ({ wines, colors, rackLayout, onRackLayoutChange, rackRows, onRackRowsChange, rackCols, onRackColsChange, onWineClick }) => {
+const RackView = ({ wines, colors, rackLayout, onRackLayoutChange, rackRows, onRackRowsChange, rackCols, onRackColsChange, onWineClick, allRackLayouts }) => {
   const [draggingKey, setDraggingKey] = useState(null);
   const [hoveredSlot, setHoveredSlot] = useState(null);
   const [tooltip, setTooltip] = useState(null); // { wine, x, y }
@@ -128,8 +128,10 @@ const RackView = ({ wines, colors, rackLayout, onRackLayoutChange, rackRows, onR
     ), [wines]);
 
   const placedKeys = useMemo(() =>
-    new Set(Object.values(rackLayout).map(({ wineIdx, bottleNum }) => `${wineIdx}-${bottleNum}`)),
-    [rackLayout]);
+    new Set((allRackLayouts ?? [rackLayout]).flatMap(layout =>
+      Object.values(layout).map(({ wineIdx, bottleNum }) => `${wineIdx}-${bottleNum}`)
+    )),
+    [allRackLayouts, rackLayout]);
 
   const unplacedBottles = useMemo(() =>
     allBottles.filter(b => !placedKeys.has(b.key)),
