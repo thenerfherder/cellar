@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import RackView from './RackView';
 import { TASTING_NOTES, DEFAULT_TASTING_NOTES, getPairingsForWine } from './data';
@@ -129,33 +129,35 @@ const WineCellar = () => {
   const [wineData, setWineData] = useState([]);
   const [winesLoading, setWinesLoading] = useState(true);
 
-  const [rackLayout, setRackLayout] = useState({});
-  const [rackRows, setRackRows] = useState(10);
-  const [rackCols, setRackCols] = useState(12);
+  const DEFAULT_RACK = { id: 'rack-1', name: 'Main Rack', rows: 10, cols: 12, layout: {} };
+  const [racks, setRacks] = useState([DEFAULT_RACK]);
+  const [activeRackId, setActiveRackId] = useState('rack-1');
 
   useEffect(() => {
     if (!user) return;
     const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (snapshot) => {
       const data = snapshot.data();
       setWineData(data?.wines ?? []);
-      setRackLayout(data?.rackLayout ?? {});
-      setRackRows(data?.rackDimensions?.rows ?? 10);
-      setRackCols(data?.rackDimensions?.cols ?? 12);
+      if (data?.racks) {
+        setRacks(data.racks);
+      } else if (data?.rackLayout) {
+        // Migrate from old single-rack format
+        setRacks([{ ...DEFAULT_RACK, layout: data.rackLayout, rows: data?.rackDimensions?.rows ?? 10, cols: data?.rackDimensions?.cols ?? 12 }]);
+      }
       setWinesLoading(false);
     });
     return unsubscribe;
   }, [user]);
 
-  const saveRackLayout = async (newLayout) => {
-    setRackLayout(newLayout);
-    await setDoc(doc(db, 'users', user.uid), { rackLayout: newLayout }, { merge: true });
+  const saveRacks = async (newRacks) => {
+    setRacks(newRacks);
+    await setDoc(doc(db, 'users', user.uid), { racks: newRacks }, { merge: true });
   };
 
-  const saveRackDimensions = async (rows, cols) => {
-    setRackRows(rows);
-    setRackCols(cols);
-    await setDoc(doc(db, 'users', user.uid), { rackDimensions: { rows, cols } }, { merge: true });
-  };
+  const activeRack = racks.find(r => r.id === activeRackId) ?? racks[0];
+
+  const updateActiveRack = (changes) =>
+    saveRacks(racks.map(r => r.id === activeRack.id ? { ...r, ...changes } : r));
 
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedVarietal, setSelectedVarietal] = useState(null);
@@ -184,18 +186,19 @@ const WineCellar = () => {
     if (origIdx === -1) return;
     const updatedWines = wineData.map((w, i) => i === origIdx ? updatedWine : w);
 
-    // If quantity was reduced, remove now-invalid rack entries for this wine
-    let updatedRack = rackLayout;
-    if (updatedWine.quantity < originalWine.quantity) {
-      const newRack = {};
-      Object.entries(rackLayout).forEach(([pos, occupant]) => {
-        if (occupant.wineIdx === origIdx && occupant.bottleNum > updatedWine.quantity) return;
-        newRack[pos] = occupant;
-      });
-      updatedRack = newRack;
-    }
+    // If quantity was reduced, remove now-invalid rack entries across all racks
+    const updatedRacks = updatedWine.quantity < originalWine.quantity
+      ? racks.map(rack => {
+          const newLayout = {};
+          Object.entries(rack.layout).forEach(([pos, occupant]) => {
+            if (occupant.wineIdx === origIdx && occupant.bottleNum > updatedWine.quantity) return;
+            newLayout[pos] = occupant;
+          });
+          return { ...rack, layout: newLayout };
+        })
+      : racks;
 
-    await setDoc(doc(db, 'users', user.uid), { wines: updatedWines, rackLayout: updatedRack }, { merge: true });
+    await setDoc(doc(db, 'users', user.uid), { wines: updatedWines, racks: updatedRacks }, { merge: true });
     setShowEditWine(null);
     setSelectedWine(updatedWine);
   };
@@ -209,27 +212,32 @@ const WineCellar = () => {
       .map(w => getWineKey(w) === getWineKey(wine) ? { ...w, quantity: w.quantity - 1 } : w)
       .filter(w => w.quantity > 0);
 
-    // Clean up rack layout
-    let updatedRack = { ...rackLayout };
-    if (isLastBottle) {
-      // Remove all entries for this wine and shift wineIdx for wines after it
-      const newRack = {};
-      Object.entries(updatedRack).forEach(([pos, occupant]) => {
-        if (occupant.wineIdx === drinkIdx) return;
-        const newIdx = occupant.wineIdx > drinkIdx ? occupant.wineIdx - 1 : occupant.wineIdx;
-        newRack[pos] = { ...occupant, wineIdx: newIdx };
-      });
-      updatedRack = newRack;
-    } else {
-      // Remove the highest-numbered bottle of this wine from the rack (the one becoming invalid)
-      const bottleToRemove = wine.quantity;
-      const posToRemove = Object.keys(updatedRack).find(
-        pos => updatedRack[pos].wineIdx === drinkIdx && updatedRack[pos].bottleNum === bottleToRemove
-      ) ?? Object.keys(updatedRack).find(pos => updatedRack[pos].wineIdx === drinkIdx);
-      if (posToRemove) delete updatedRack[posToRemove];
-    }
+    // Clean up rack layout across all racks
+    const updatedRacks = racks.map(rack => {
+      const layout = { ...rack.layout };
+      if (isLastBottle) {
+        const newLayout = {};
+        Object.entries(layout).forEach(([pos, occupant]) => {
+          if (occupant.wineIdx === drinkIdx) return;
+          const newIdx = occupant.wineIdx > drinkIdx ? occupant.wineIdx - 1 : occupant.wineIdx;
+          newLayout[pos] = { ...occupant, wineIdx: newIdx };
+        });
+        return { ...rack, layout: newLayout };
+      } else {
+        const bottleToRemove = wine.quantity;
+        const posToRemove = Object.keys(layout).find(
+          pos => layout[pos].wineIdx === drinkIdx && layout[pos].bottleNum === bottleToRemove
+        ) ?? Object.keys(layout).find(pos => layout[pos].wineIdx === drinkIdx);
+        if (posToRemove) {
+          const newLayout = { ...layout };
+          delete newLayout[posToRemove];
+          return { ...rack, layout: newLayout };
+        }
+        return rack;
+      }
+    });
 
-    await setDoc(doc(db, 'users', user.uid), { wines: updatedWines, rackLayout: updatedRack }, { merge: true });
+    await setDoc(doc(db, 'users', user.uid), { wines: updatedWines, racks: updatedRacks }, { merge: true });
   };
 
   // Memoized calculations
@@ -640,6 +648,62 @@ Write only the tasting notes, no preamble.`
     </div>
   );
 
+  const RackTab = ({ rack, isActive, onClick, onRename, onDelete }) => {
+    const [renaming, setRenaming] = useState(false);
+    const [draft, setDraft] = useState(rack.name);
+    const inputRef = useRef(null);
+
+    const commitRename = () => {
+      const name = draft.trim() || rack.name;
+      setDraft(name);
+      onRename(name);
+      setRenaming(false);
+    };
+
+    useEffect(() => { if (renaming) inputRef.current?.select(); }, [renaming]);
+
+    return (
+      <div
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+          isActive
+            ? 'bg-amber-900 text-amber-100 border-amber-900'
+            : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500 hover:text-gray-900'
+        }`}
+        onClick={onClick}
+      >
+        {renaming ? (
+          <input
+            ref={inputRef}
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') { setDraft(rack.name); setRenaming(false); } }}
+            onClick={e => e.stopPropagation()}
+            className="bg-transparent outline-none w-24 text-xs font-bold uppercase tracking-wider"
+          />
+        ) : (
+          <span>{rack.name}</span>
+        )}
+        <button
+          onClick={e => { e.stopPropagation(); setDraft(rack.name); setRenaming(true); }}
+          className={`opacity-50 hover:opacity-100 transition-opacity ${isActive ? 'text-amber-200' : 'text-gray-400'}`}
+          title="Rename"
+        >
+          ✎
+        </button>
+        {onDelete && (
+          <button
+            onClick={e => { e.stopPropagation(); onDelete(); }}
+            className={`opacity-50 hover:opacity-100 transition-opacity ${isActive ? 'text-amber-200' : 'text-gray-400'}`}
+            title="Delete rack"
+          >
+            ×
+          </button>
+        )}
+      </div>
+    );
+  };
+
   const AddWineModal = ({ onClose, onSave, initialWine }) => {
     const empty = { producer: '', name: '', vintage: '', varietal: '', region: '', quantity: '1', estimatedPrice: '', drinkWindow: '' };
     const [form, setForm] = useState(() => initialWine ? {
@@ -795,17 +859,48 @@ Write only the tasting notes, no preamble.`
 
         {/* Rack View */}
         {activeView === 'rack' && (
-          <RackView
-            wines={wineData}
-            colors={COLORS}
-            rackLayout={rackLayout}
-            onRackLayoutChange={saveRackLayout}
-            rackRows={rackRows}
-            onRackRowsChange={(rows) => saveRackDimensions(rows, rackCols)}
-            rackCols={rackCols}
-            onRackColsChange={(cols) => saveRackDimensions(rackRows, cols)}
-            onWineClick={setSelectedWine}
-          />
+          <>
+            {/* Rack tabs */}
+            <div className="flex items-center gap-2 mb-6 flex-wrap">
+              {racks.map(rack => (
+                <RackTab
+                  key={rack.id}
+                  rack={rack}
+                  isActive={rack.id === activeRack.id}
+                  onClick={() => setActiveRackId(rack.id)}
+                  onRename={(name) => saveRacks(racks.map(r => r.id === rack.id ? { ...r, name } : r))}
+                  onDelete={racks.length > 1 ? () => {
+                    if (!window.confirm(`Delete "${rack.name}"? All bottle positions in this rack will be lost.`)) return;
+                    const remaining = racks.filter(r => r.id !== rack.id);
+                    if (activeRack.id === rack.id) setActiveRackId(remaining[0].id);
+                    saveRacks(remaining);
+                  } : null}
+                />
+              ))}
+              <button
+                onClick={() => {
+                  const id = `rack-${Date.now()}`;
+                  saveRacks([...racks, { id, name: 'New Rack', rows: 10, cols: 12, layout: {} }]);
+                  setActiveRackId(id);
+                }}
+                className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-500 border border-dashed border-gray-300 rounded-lg hover:text-gray-900 hover:border-gray-500 transition-colors"
+              >
+                + Add Rack
+              </button>
+            </div>
+
+            <RackView
+              wines={wineData}
+              colors={COLORS}
+              rackLayout={activeRack.layout}
+              onRackLayoutChange={(layout) => updateActiveRack({ layout })}
+              rackRows={activeRack.rows}
+              onRackRowsChange={(rows) => updateActiveRack({ rows })}
+              rackCols={activeRack.cols}
+              onRackColsChange={(cols) => updateActiveRack({ cols })}
+              onWineClick={setSelectedWine}
+            />
+          </>
         )}
 
         {/* Dashboard — Stats Cards */}
@@ -1184,20 +1279,23 @@ Write only the tasting notes, no preamble.`
                   </div>
                   {(() => {
                     const wineIdx = wineData.findIndex(w => getWineKey(w) === getWineKey(selectedWine));
-                    const positions = Object.entries(rackLayout)
-                      .filter(([, occupant]) => occupant.wineIdx === wineIdx)
-                      .map(([pos]) => {
-                        const [row, col] = pos.split('-').map(Number);
-                        return String.fromCharCode(65 + col) + (row + 1);
-                      })
-                      .sort();
+                    const positions = racks.flatMap(rack =>
+                      Object.entries(rack.layout)
+                        .filter(([, occupant]) => occupant.wineIdx === wineIdx)
+                        .map(([pos]) => {
+                          const [row, col] = pos.split('-').map(Number);
+                          return { label: String.fromCharCode(65 + col) + (row + 1), rackName: rack.name };
+                        })
+                    ).sort((a, b) => a.rackName.localeCompare(b.rackName) || a.label.localeCompare(b.label));
                     if (positions.length === 0) return null;
                     return (
                       <div className="col-span-2">
                         <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Rack Positions</div>
                         <div className="flex flex-wrap gap-1.5">
-                          {positions.map(pos => (
-                            <span key={pos} className="px-2 py-0.5 bg-amber-100 text-amber-800 text-sm font-bold rounded font-mono">{pos}</span>
+                          {positions.map(({ label, rackName }, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-amber-100 text-amber-800 text-sm font-bold rounded font-mono" title={rackName}>
+                              {racks.length > 1 ? `${rackName}: ` : ''}{label}
+                            </span>
                           ))}
                         </div>
                       </div>
