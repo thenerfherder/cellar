@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-
-const DEFAULT_STORAGE_KEY = 'cellar_rack_layout';
+import React, { useState, useMemo, useRef } from 'react';
 
 // ── Bottle token (draggable circle representing one bottle) ──────────────────
 
@@ -104,42 +102,12 @@ const RackSlot = ({ row, col, occupant, wine, color, draggingKey, isHovered, onD
 
 // ── Main rack view ────────────────────────────────────────────────────────────
 
-const DIMENSIONS_STORAGE_KEY = 'cellar_rack_dimensions';
-
-const RackView = ({ wines, colors, storageKey = DEFAULT_STORAGE_KEY }) => {
-  const [rackRows, setRackRows] = useState(() => {
-    try {
-      const saved = localStorage.getItem(DIMENSIONS_STORAGE_KEY);
-      return saved ? JSON.parse(saved).rows ?? 10 : 10;
-    } catch { return 10; }
-  });
-  const [rackCols, setRackCols] = useState(() => {
-    try {
-      const saved = localStorage.getItem(DIMENSIONS_STORAGE_KEY);
-      return saved ? JSON.parse(saved).cols ?? 12 : 12;
-    } catch { return 12; }
-  });
-
-  const [rackLayout, setRackLayout] = useState(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      return saved ? JSON.parse(saved) : {};
-    } catch { return {}; }
-  });
-
+const RackView = ({ wines, colors, rackLayout, onRackLayoutChange, rackRows, onRackRowsChange, rackCols, onRackColsChange }) => {
   const [draggingKey, setDraggingKey] = useState(null);
   const [hoveredSlot, setHoveredSlot] = useState(null);
   const [tooltip, setTooltip] = useState(null); // { wine, x, y }
 
   const dragInfoRef = useRef(null);
-
-  useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(rackLayout));
-  }, [rackLayout, storageKey]);
-
-  useEffect(() => {
-    localStorage.setItem(DIMENSIONS_STORAGE_KEY, JSON.stringify({ rows: rackRows, cols: rackCols }));
-  }, [rackRows, rackCols]);
 
   // Build varietal → color map
   const varietalColors = useMemo(() => {
@@ -183,22 +151,14 @@ const RackView = ({ wines, colors, storageKey = DEFAULT_STORAGE_KEY }) => {
     if (!info) return;
     const { wineIdx, bottleNum, source, posKey: srcPosKey } = info;
 
-    setRackLayout(prev => {
-      const next = { ...prev };
-      const displaced = next[targetPosKey];
+    const next = { ...rackLayout };
+    const displaced = next[targetPosKey];
 
-      // Remove from source rack slot
-      if (source === 'rack') delete next[srcPosKey];
+    if (source === 'rack') delete next[srcPosKey];
+    if (displaced && source === 'rack') next[srcPosKey] = displaced;
+    next[targetPosKey] = { wineIdx, bottleNum };
 
-      // Swap: put displaced bottle into source slot
-      if (displaced && source === 'rack') {
-        next[srcPosKey] = displaced;
-      }
-
-      next[targetPosKey] = { wineIdx, bottleNum };
-      return next;
-    });
-
+    onRackLayoutChange(next);
     dragInfoRef.current = null;
     setDraggingKey(null);
     setHoveredSlot(null);
@@ -208,11 +168,9 @@ const RackView = ({ wines, colors, storageKey = DEFAULT_STORAGE_KEY }) => {
     e.preventDefault();
     const info = dragInfoRef.current;
     if (info?.source === 'rack') {
-      setRackLayout(prev => {
-        const next = { ...prev };
-        delete next[info.posKey];
-        return next;
-      });
+      const next = { ...rackLayout };
+      delete next[info.posKey];
+      onRackLayoutChange(next);
     }
     dragInfoRef.current = null;
     setDraggingKey(null);
@@ -220,25 +178,23 @@ const RackView = ({ wines, colors, storageKey = DEFAULT_STORAGE_KEY }) => {
 
   // Auto-fill: place unplaced bottles into the first available empty slots
   const handleAutoFill = () => {
-    setRackLayout(prev => {
-      const next = { ...prev };
-      const remaining = unplacedBottles.slice();
-      for (let row = 0; row < rackRows && remaining.length > 0; row++) {
-        for (let col = 0; col < rackCols && remaining.length > 0; col++) {
-          const posKey = `${row}-${col}`;
-          if (!next[posKey]) {
-            const { wineIdx, bottleNum } = remaining.shift();
-            next[posKey] = { wineIdx, bottleNum };
-          }
+    const next = { ...rackLayout };
+    const remaining = unplacedBottles.slice();
+    for (let row = 0; row < rackRows && remaining.length > 0; row++) {
+      for (let col = 0; col < rackCols && remaining.length > 0; col++) {
+        const posKey = `${row}-${col}`;
+        if (!next[posKey]) {
+          const { wineIdx, bottleNum } = remaining.shift();
+          next[posKey] = { wineIdx, bottleNum };
         }
       }
-      return next;
-    });
+    }
+    onRackLayoutChange(next);
   };
 
   const handleClearRack = () => {
     if (window.confirm('Clear all rack positions? Bottles will return to the unplaced pile.')) {
-      setRackLayout({});
+      onRackLayoutChange({});
     }
   };
 
@@ -270,14 +226,14 @@ const RackView = ({ wines, colors, storageKey = DEFAULT_STORAGE_KEY }) => {
           {/* Rack size controls */}
           <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2 text-xs font-semibold text-gray-700">
             <span className="text-gray-500 uppercase tracking-wider" style={{ fontSize: 10 }}>Rows</span>
-            <button onClick={() => setRackRows(r => Math.max(1, r - 1))} className="w-5 h-5 flex items-center justify-center bg-white rounded shadow text-gray-700 hover:bg-gray-50">−</button>
+            <button onClick={() => onRackRowsChange(Math.max(1, rackRows - 1))} className="w-5 h-5 flex items-center justify-center bg-white rounded shadow text-gray-700 hover:bg-gray-50">−</button>
             <span className="w-5 text-center">{rackRows}</span>
-            <button onClick={() => setRackRows(r => Math.min(20, r + 1))} className="w-5 h-5 flex items-center justify-center bg-white rounded shadow text-gray-700 hover:bg-gray-50">+</button>
+            <button onClick={() => onRackRowsChange(Math.min(20, rackRows + 1))} className="w-5 h-5 flex items-center justify-center bg-white rounded shadow text-gray-700 hover:bg-gray-50">+</button>
             <span className="text-gray-300 mx-1">|</span>
             <span className="text-gray-500 uppercase tracking-wider" style={{ fontSize: 10 }}>Cols</span>
-            <button onClick={() => setRackCols(c => Math.max(1, c - 1))} className="w-5 h-5 flex items-center justify-center bg-white rounded shadow text-gray-700 hover:bg-gray-50">−</button>
+            <button onClick={() => onRackColsChange(Math.max(1, rackCols - 1))} className="w-5 h-5 flex items-center justify-center bg-white rounded shadow text-gray-700 hover:bg-gray-50">−</button>
             <span className="w-5 text-center">{rackCols}</span>
-            <button onClick={() => setRackCols(c => Math.min(24, c + 1))} className="w-5 h-5 flex items-center justify-center bg-white rounded shadow text-gray-700 hover:bg-gray-50">+</button>
+            <button onClick={() => onRackColsChange(Math.min(24, rackCols + 1))} className="w-5 h-5 flex items-center justify-center bg-white rounded shadow text-gray-700 hover:bg-gray-50">+</button>
           </div>
 
           <button

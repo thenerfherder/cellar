@@ -109,15 +109,33 @@ const WineCellar = () => {
   const [wineData, setWineData] = useState([]);
   const [winesLoading, setWinesLoading] = useState(true);
 
+  const [rackLayout, setRackLayout] = useState({});
+  const [rackRows, setRackRows] = useState(10);
+  const [rackCols, setRackCols] = useState(12);
+
   useEffect(() => {
     if (!user) return;
     const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (snapshot) => {
       const data = snapshot.data();
       setWineData(data?.wines ?? []);
+      setRackLayout(data?.rackLayout ?? {});
+      setRackRows(data?.rackDimensions?.rows ?? 10);
+      setRackCols(data?.rackDimensions?.cols ?? 12);
       setWinesLoading(false);
     });
     return unsubscribe;
   }, [user]);
+
+  const saveRackLayout = async (newLayout) => {
+    setRackLayout(newLayout);
+    await setDoc(doc(db, 'users', user.uid), { rackLayout: newLayout }, { merge: true });
+  };
+
+  const saveRackDimensions = async (rows, cols) => {
+    setRackRows(rows);
+    setRackCols(cols);
+    await setDoc(doc(db, 'users', user.uid), { rackDimensions: { rows, cols } }, { merge: true });
+  };
 
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedVarietal, setSelectedVarietal] = useState(null);
@@ -142,10 +160,34 @@ const WineCellar = () => {
 
   const handleDrinkBottle = async (wine, e) => {
     e.stopPropagation();
-    const updated = wineData
+    const drinkIdx = wineData.findIndex(w => getWineKey(w) === getWineKey(wine));
+    const isLastBottle = wine.quantity === 1;
+
+    const updatedWines = wineData
       .map(w => getWineKey(w) === getWineKey(wine) ? { ...w, quantity: w.quantity - 1 } : w)
       .filter(w => w.quantity > 0);
-    await setDoc(doc(db, 'users', user.uid), { wines: updated }, { merge: true });
+
+    // Clean up rack layout
+    let updatedRack = { ...rackLayout };
+    if (isLastBottle) {
+      // Remove all entries for this wine and shift wineIdx for wines after it
+      const newRack = {};
+      Object.entries(updatedRack).forEach(([pos, occupant]) => {
+        if (occupant.wineIdx === drinkIdx) return;
+        const newIdx = occupant.wineIdx > drinkIdx ? occupant.wineIdx - 1 : occupant.wineIdx;
+        newRack[pos] = { ...occupant, wineIdx: newIdx };
+      });
+      updatedRack = newRack;
+    } else {
+      // Remove the highest-numbered bottle of this wine from the rack (the one becoming invalid)
+      const bottleToRemove = wine.quantity;
+      const posToRemove = Object.keys(updatedRack).find(
+        pos => updatedRack[pos].wineIdx === drinkIdx && updatedRack[pos].bottleNum === bottleToRemove
+      ) ?? Object.keys(updatedRack).find(pos => updatedRack[pos].wineIdx === drinkIdx);
+      if (posToRemove) delete updatedRack[posToRemove];
+    }
+
+    await setDoc(doc(db, 'users', user.uid), { wines: updatedWines, rackLayout: updatedRack }, { merge: true });
   };
 
   // Memoized calculations
@@ -686,7 +728,18 @@ Write only the tasting notes, no preamble.`
         </div>
 
         {/* Rack View */}
-        {activeView === 'rack' && <RackView wines={wineData} colors={COLORS} storageKey={`cellar_rack_layout_${user.uid}`} />}
+        {activeView === 'rack' && (
+          <RackView
+            wines={wineData}
+            colors={COLORS}
+            rackLayout={rackLayout}
+            onRackLayoutChange={saveRackLayout}
+            rackRows={rackRows}
+            onRackRowsChange={(rows) => saveRackDimensions(rows, rackCols)}
+            rackCols={rackCols}
+            onRackColsChange={(cols) => saveRackDimensions(rackRows, cols)}
+          />
+        )}
 
         {/* Dashboard — Stats Cards */}
         {activeView === 'dashboard' && <>
