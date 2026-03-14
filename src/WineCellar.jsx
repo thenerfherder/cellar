@@ -178,8 +178,6 @@ const WineCellar = () => {
   const [selectedDrinkability, setSelectedDrinkability] = useState(null);
   const [selectedVintage, setSelectedVintage] = useState(null);
   const [selectedWine, setSelectedWine] = useState(null);
-  const [generatedNotes, setGeneratedNotes] = useState({});
-  const [loadingNoteFor, setLoadingNoteFor] = useState(null);
   const [pairingFilter, setPairingFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState(null);
   const [sortColumn, setSortColumn] = useState(null);
@@ -454,70 +452,6 @@ const WineCellar = () => {
     }
   };
 
-  const generateAITastingNotes = async (wine) => {
-    const wineKey = getWineKey(wine);
-
-    if (generatedNotes[wineKey]) {
-      return generatedNotes[wineKey];
-    }
-
-    setLoadingNoteFor(wineKey);
-
-    try {
-      const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY;
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-5",
-          max_tokens: 1000,
-          messages: [
-            {
-              role: "user",
-              content: `As an expert sommelier, write detailed tasting notes for this specific wine:
-
-Producer: ${wine.producer}
-Wine: ${wine.name}
-Vintage: ${wine.vintage || 'Non-Vintage'}
-Varietal: ${wine.varietal}
-Country: ${wine.country}
-State/Region: ${wine.state}
-Price: ${wine.estimatedPrice}
-
-Write 2-3 sentences of professional tasting notes that are specific to this producer, wine, and vintage. Consider:
-- The producer's house style and reputation
-- The specific vintage characteristics for this region
-- The terroir of the region
-- What the price point indicates about quality and aging potential
-- Expected flavor profile, structure, and drinking experience
-
-Write only the tasting notes, no preamble.`
-            }
-          ],
-        })
-      });
-
-      const data = await response.json();
-      const notes = data.content
-        .filter(block => block.type === "text")
-        .map(block => block.text)
-        .join("\n");
-
-      setGeneratedNotes(prev => ({ ...prev, [wineKey]: notes }));
-      setLoadingNoteFor(null);
-
-      return notes;
-    } catch (error) {
-      console.error("Failed to generate AI tasting notes:", error);
-      setLoadingNoteFor(null);
-      return null;
-    }
-  };
 
   // ============================================================================
   // COMPONENTS
@@ -1369,35 +1303,9 @@ Write only the tasting notes, no preamble.`
             </div>
 
             <div className="bg-blue-50 rounded-lg p-6">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-black text-gray-900 uppercase">Tasting Notes</h3>
-                <button
-                  onClick={async () => {
-                    const wineKey = getWineKey(selectedWine);
-                    if (!generatedNotes[wineKey]) {
-                      await generateAITastingNotes(selectedWine);
-                    }
-                  }}
-                  disabled={loadingNoteFor === getWineKey(selectedWine)}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors ${
-                    generatedNotes[getWineKey(selectedWine)]
-                      ? 'bg-green-600 text-white cursor-default'
-                      : loadingNoteFor === getWineKey(selectedWine)
-                      ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
-                  }`}
-                >
-                  {loadingNoteFor === getWineKey(selectedWine)
-                    ? 'Generating...'
-                    : generatedNotes[getWineKey(selectedWine)]
-                    ? '✓ AI Notes'
-                    : 'Generate AI Notes'}
-                </button>
-              </div>
+              <h3 className="text-lg font-black text-gray-900 uppercase mb-3">Tasting Notes</h3>
               <p className="text-gray-700 leading-relaxed">
-                {generatedNotes[getWineKey(selectedWine)] ||
-                 TASTING_NOTES[selectedWine.varietal] ||
-                  DEFAULT_TASTING_NOTES}
+                {TASTING_NOTES[selectedWine.varietal] || DEFAULT_TASTING_NOTES}
               </p>
             </div>
 
