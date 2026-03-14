@@ -120,7 +120,17 @@ These are module-level and should be reused rather than redefined:
 - React list keys fixed: `SegmentedBar` and `Legend` use `item.name`; table rows use `getWineKey(wine)`
 
 ### Remaining tech debt (prioritized)
-1. **Extract nested components** — `StatCard`, `SegmentedBar`, `Legend`, `WineCard`, `DetailModal`, etc. are all defined inside `WineCellar.jsx` (~979 lines). Should move to `src/components/`.
-2. **Consolidate `getXxxDetails()` functions** — four nearly-identical functions (country, varietal, drinkability, vintage) could become one generic function.
-3. **Extract filtering/sorting logic** — the `filteredCellar` useMemo is ~68 lines; should move to a utility file.
-4. **Consolidate `DetailModal` implementations** — four similar modal render blocks could use a generic factory.
+
+#### High Priority
+1. **Extract `AddWineModal`** — lines 652–950 (~299 lines) in `WineCellar.jsx`; should move to `src/components/AddWineModal.jsx`.
+2. **Extract other nested components** — `StatCard`, `SegmentedBar`, `Legend`, `SegmentedBarWithLegend`, `WineCard`, `DetailModal`, `WineList`, `RackTab` are all defined inside `WineCellar.jsx`; should move to `src/components/`.
+3. **Consolidate `getXxxDetails()` functions** — `getCountryDetails`, `getVarietalDetails`, `getDrinkabilityDetails`, `getVintageDetails` (~lines 412–451) follow identical structure; replace with one generic function.
+4. **Extract `filteredCellar` into a custom hook** — ~68-line `useMemo` in `WineCellar.jsx`; should move to `src/hooks/useWineFiltering.js`.
+
+#### Medium Priority
+5. **Consolidate `DetailModal` boilerplate** — four modal invocations (~lines 1174–1216) with identical `isOpen/onClose/title` pattern; use a factory/wrapper component.
+6. **Move constants to `src/constants.js`** — `COLORS`, `CONFIG`, `DRINKABILITY_STATUS`, `VARIETALS`, `WINE_REGIONS` are defined in `WineCellar.jsx` (~lines 13–139) but should be importable across components.
+
+#### Low Priority / Quick Wins
+7. **Remove unused `DEFAULT_PAIRINGS` export** from `src/data.js` — only used internally by `getPairingsForWine`, never imported elsewhere.
+8. **Replace magic strings with named constants** — `'dashboard'`, `'rack'`, `'Other'`, `'NV'` each appear 3–5 times; should be constants (e.g. `VIEW_MODES`, `SPECIAL_VALUES`).
