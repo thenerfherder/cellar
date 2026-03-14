@@ -377,7 +377,7 @@ const WineCellar = () => {
       map[vintage] = (map[vintage] || 0) + wine.quantity;
     });
     return Object.entries(map)
-      .sort(([a], [b]) => b.localeCompare(a))
+      .sort(([a], [b]) => a.localeCompare(b))
       .map(([name, value]) => ({ name, value }));
   }, [wineData]);
 
@@ -389,7 +389,7 @@ const WineCellar = () => {
       map[peakStr] = (map[peakStr] || 0) + wine.quantity;
     });
     return Object.entries(map)
-      .sort(([a], [b]) => b.localeCompare(a))
+      .sort(([a], [b]) => a.localeCompare(b))
       .map(([name, value]) => ({ name, value }));
   }, [wineData]);
 

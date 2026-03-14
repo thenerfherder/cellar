@@ -180,28 +180,6 @@ const RackView = ({ wines, colors, rackLayout, onRackLayoutChange, rackRows, onR
     setDraggingKey(null);
   };
 
-  // Auto-fill: place unplaced bottles into the first available empty slots
-  const handleAutoFill = () => {
-    const next = { ...rackLayout };
-    const remaining = unplacedBottles.slice();
-    for (let row = 0; row < rackRows && remaining.length > 0; row++) {
-      for (let col = 0; col < rackCols && remaining.length > 0; col++) {
-        const posKey = `${row}-${col}`;
-        if (!next[posKey]) {
-          const { wineIdx, bottleNum } = remaining.shift();
-          next[posKey] = { wineIdx, bottleNum };
-        }
-      }
-    }
-    onRackLayoutChange(next);
-  };
-
-  const handleClearRack = () => {
-    if (window.confirm('Clear all rack positions? Bottles will return to the unplaced pile.')) {
-      onRackLayoutChange({});
-    }
-  };
-
   // ── Tooltip helpers ───────────────────────────────────────────────────────
 
   const makeTooltipHandlers = (wine) => ({
@@ -240,26 +218,12 @@ const RackView = ({ wines, colors, rackLayout, onRackLayoutChange, rackRows, onR
             <button onClick={() => onRackColsChange(Math.min(24, rackCols + 1))} className="w-5 h-5 flex items-center justify-center bg-white rounded shadow text-gray-700 hover:bg-gray-50">+</button>
           </div>
 
-          <button
-            onClick={handleAutoFill}
-            disabled={unplacedBottles.length === 0}
-            className="px-3 py-2 text-xs font-semibold bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Auto-fill
-          </button>
-
-          <button
-            onClick={handleClearRack}
-            disabled={filledCount === 0}
-            className="px-3 py-2 text-xs font-semibold text-gray-500 border border-gray-300 rounded-lg hover:text-red-600 hover:border-red-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            Clear
-          </button>
         </div>
       </div>
 
       {/* The rack */}
-      <div className="bg-amber-900 rounded-xl p-5 shadow-2xl overflow-x-auto" style={{ background: 'linear-gradient(135deg, #78350f 0%, #92400e 50%, #78350f 100%)' }}>
+      <div className="overflow-x-auto">
+      <div className="inline-block bg-amber-900 rounded-xl p-5 shadow-2xl" style={{ background: 'linear-gradient(135deg, #78350f 0%, #92400e 50%, #78350f 100%)' }}>
         {/* Column labels */}
         <div className="flex gap-1 mb-2" style={{ paddingLeft: 24 }}>
           {Array.from({ length: rackCols }, (_, col) => (
@@ -309,6 +273,7 @@ const RackView = ({ wines, colors, rackLayout, onRackLayoutChange, rackRows, onR
             </div>
           ))}
         </div>
+      </div>
       </div>
 
       {/* Varietal legend */}
