@@ -560,22 +560,22 @@ const WineCellar = () => {
       >
         <div className="min-h-screen flex items-start justify-center p-4 py-8">
           <div
-            className="bg-white rounded-lg shadow-2xl max-w-4xl w-full"
+            className="bg-white rounded-lg shadow-2xl max-w-2xl w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center z-10 rounded-t-lg">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-3 flex justify-between items-center z-10 rounded-t-lg">
               <div>
-                <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tight">{title}</h2>
-                <p className="text-gray-500 text-sm uppercase tracking-widest">{subtitle}</p>
+                <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">{title}</h2>
+                <p className="text-gray-500 text-xs uppercase tracking-widest">{subtitle}</p>
               </div>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 text-3xl font-bold leading-none"
+                className="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none"
               >
                 ×
               </button>
             </div>
-            <div className="p-6">{children}</div>
+            <div className="p-5">{children}</div>
           </div>
         </div>
       </div>
@@ -1234,10 +1234,10 @@ const WineCellar = () => {
         subtitle={selectedWine?.producer}
       >
         {selectedWine && (
-          <div className="space-y-6">
-            <div className="bg-gray-50 rounded-lg p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-black text-gray-900 uppercase">Details</h3>
+          <div className="space-y-4">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-sm font-black text-gray-900 uppercase">Details</h3>
                 <button
                   onClick={() => setShowEditWine(selectedWine)}
                   className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-600 border border-gray-300 rounded-lg hover:text-gray-900 hover:border-gray-500 transition-colors"
@@ -1245,35 +1245,35 @@ const WineCellar = () => {
                   Edit
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Vintage</div>
-                  <div className="text-lg font-bold text-gray-900">{selectedWine.vintage || 'NV'}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">Vintage</div>
+                  <div className="text-sm font-bold text-gray-900">{selectedWine.vintage || 'NV'}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Varietal</div>
-                  <div className="text-lg font-bold text-gray-900">{selectedWine.varietal}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">Varietal</div>
+                  <div className="text-sm font-bold text-gray-900">{selectedWine.varietal}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Country</div>
-                  <div className="text-lg font-bold text-gray-900">{selectedWine.country}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">Country</div>
+                  <div className="text-sm font-bold text-gray-900">{selectedWine.country}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">State / Region</div>
-                  <div className="text-lg font-bold text-gray-900">{selectedWine.state}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">State / Region</div>
+                  <div className="text-sm font-bold text-gray-900">{selectedWine.state}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Quantity</div>
-                  <div className="text-lg font-bold text-gray-900">{selectedWine.quantity} bottles</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">Quantity</div>
+                  <div className="text-sm font-bold text-gray-900">{selectedWine.quantity} bottles</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Price</div>
-                  <div className="text-lg font-bold text-gray-900">${selectedWine.estimatedPrice.toFixed(2)}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">Price</div>
+                  <div className="text-sm font-bold text-gray-900">${selectedWine.estimatedPrice.toFixed(2)}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">Drink Window</div>
-                  <div className="text-lg font-bold text-gray-900">{selectedWine.drinkWindow}</div>
-                  <div className="text-sm text-gray-500 mt-1">Est. Peak: {getPeakYear(selectedWine)}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-0.5">Drink Window</div>
+                  <div className="text-sm font-bold text-gray-900">{selectedWine.drinkWindow}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">Est. Peak: {getPeakYear(selectedWine)}</div>
                 </div>
                 {(() => {
                   const wineIdx = wineData.findIndex(w => getWineKey(w) === getWineKey(selectedWine));
@@ -1302,20 +1302,20 @@ const WineCellar = () => {
               </div>
             </div>
 
-            <div className="bg-blue-50 rounded-lg p-6">
-              <h3 className="text-lg font-black text-gray-900 uppercase mb-3">Tasting Notes</h3>
-              <p className="text-gray-700 leading-relaxed">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <h3 className="text-sm font-black text-gray-900 uppercase mb-2">Tasting Notes</h3>
+              <p className="text-gray-700 text-sm leading-relaxed">
                 {TASTING_NOTES[selectedWine.varietal] || DEFAULT_TASTING_NOTES}
               </p>
             </div>
 
-            <div className="bg-green-50 rounded-lg p-6">
-              <h3 className="text-lg font-black text-gray-900 mb-3 uppercase">Perfect Pairings</h3>
-              <div className="flex flex-wrap gap-2">
+            <div className="bg-green-50 rounded-lg p-4">
+              <h3 className="text-sm font-black text-gray-900 mb-2 uppercase">Perfect Pairings</h3>
+              <div className="flex flex-wrap gap-1.5">
                 {getPairingsForWine(selectedWine).map((pairing, idx) => (
                   <span
                     key={idx}
-                    className="bg-white px-4 py-2 rounded-full text-sm font-semibold text-gray-700 border border-gray-200"
+                    className="bg-white px-3 py-1 rounded-full text-xs font-semibold text-gray-700 border border-gray-200"
                   >
                     {pairing}
                   </span>
