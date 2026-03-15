@@ -26,7 +26,7 @@ export const VARIETALS = {
   ],
   'White': [
     'Albariño', 'Chablis', 'Chardonnay', 'Chenin Blanc', 'Gewürztraminer', 'Grüner Veltliner',
-    'Marsanne', 'Muscat', 'Pinot Gris', 'Riesling', 'Roussanne',
+    'Marsanne', 'Muscat', 'Pinot Gris', 'Pouilly-Fuissé', 'Riesling', 'Roussanne',
     'Sauvignon Blanc', 'Viognier',
   ],
   'Rosé': ['Rosé'],
