@@ -6,14 +6,18 @@ export function useCatalog() {
   const [data, setData] = useState({ producers: [], entries: [] });
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(doc(db, 'catalog', 'wines'), (snap) => {
-      if (snap.exists()) {
-        setData({
-          producers: snap.data().producers ?? [],
-          entries: snap.data().entries ?? [],
-        });
-      }
-    });
+    const unsubscribe = onSnapshot(
+      doc(db, 'catalog', 'wines'),
+      (snap) => {
+        if (snap.exists()) {
+          setData({
+            producers: snap.data().producers ?? [],
+            entries: snap.data().entries ?? [],
+          });
+        }
+      },
+      (error) => console.error('[useCatalog] Firestore read failed — check security rules for catalog/wines:', error)
+    );
     return unsubscribe;
   }, []);
 
