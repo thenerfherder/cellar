@@ -21,7 +21,10 @@ export function useCatalog() {
     return unsubscribe;
   }, []);
 
-  const producers = [...data.producers].sort();
+  const producers = [...new Set([
+    ...data.producers,
+    ...data.entries.map(e => e.split('||')[0]),
+  ])].sort();
 
   // Returns wine names for a given producer (or all wine names if no producer given)
   const getWineNames = (producer) => {
