@@ -20,7 +20,7 @@ export const DRINKABILITY_STATUS = {
 
 export const VARIETALS = {
   'Red': [
-    'Barbera', 'Cabernet Franc', 'Cabernet Sauvignon', 'Gamay', 'Grenache',
+    'Barbera', 'Cabernet Franc', 'Cabernet Sauvignon', 'Carmenère', 'Gamay', 'Grenache',
     'Malbec', 'Merlot', 'Mourvèdre', 'Nebbiolo', 'Petit Verdot', 'Petite Sirah',
     'Pinot Noir', 'Sangiovese', 'Syrah', 'Tempranillo', 'Zinfandel',
   ],
