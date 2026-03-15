@@ -50,8 +50,8 @@ const AddWineModal = ({ onClose, onSave, initialWine, catalogProducers, getCatal
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start sm:items-center justify-center p-4 pt-8 sm:pt-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="border-b border-gray-200 p-6 flex justify-between items-center">
           <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">{initialWine ? 'Edit Wine' : 'Add Wine'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-3xl font-bold leading-none">×</button>

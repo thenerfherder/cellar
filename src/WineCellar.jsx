@@ -249,14 +249,14 @@ const WineCellar = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-h-screen bg-white p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-10 flex items-end justify-between flex-wrap gap-4">
+        <div className="mb-6 sm:mb-10 flex items-end justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-4xl font-black text-gray-900 mb-1 tracking-tight uppercase">CELLAR</h1>
             <p className="text-gray-500 text-xs uppercase tracking-widest">Your Personal Collection</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={() => setShowAddWine(true)}
               className="px-5 py-2 text-sm font-bold uppercase tracking-wider bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors"
@@ -349,7 +349,7 @@ const WineCellar = () => {
         {/* Dashboard */}
         {activeView === 'dashboard' && <>
 
-        <div className="grid grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
           <StatCard label="Total Bottles" value={stats.totalBottles} />
           <StatCard
             label="Estimated Value"
@@ -478,9 +478,9 @@ const WineCellar = () => {
                 <tr className="border-b-2 border-gray-900">
                   <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Producer</th>
                   <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Wine</th>
-                  <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Varietal</th>
+                  <th className="hidden md:table-cell px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Varietal</th>
                   <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Country</th>
-                  <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">State</th>
+                  <th className="hidden md:table-cell px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">State</th>
                   <th
                     className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left cursor-pointer hover:bg-gray-50 select-none"
                     onClick={() => handleSort('vintage')}
@@ -505,7 +505,7 @@ const WineCellar = () => {
                   >
                     Drink Window {sortColumn === 'drinkability' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
-                  <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Rating</th>
+                  <th className="hidden sm:table-cell px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Rating</th>
                   <th className="px-2 py-2"></th>
                 </tr>
               </thead>
@@ -564,9 +564,9 @@ const WineCellar = () => {
                       {(isNewGroup || !useGrouping) && (
                         <>
                           <td className="px-2 py-1.5 text-gray-900 font-semibold align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.name}</td>
-                          <td className="px-2 py-1.5 text-gray-700 align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.varietal}</td>
+                          <td className="hidden md:table-cell px-2 py-1.5 text-gray-700 align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.varietal}</td>
                           <td className="px-2 py-1.5 text-gray-700 align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.country}</td>
-                          <td className="px-2 py-1.5 text-gray-700 align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.state}</td>
+                          <td className="hidden md:table-cell px-2 py-1.5 text-gray-700 align-top text-sm" rowSpan={useGrouping ? rowspan : 1}>{wine.state}</td>
                         </>
                       )}
                       <td className="px-2 py-1.5 text-gray-700 text-sm">{wine.vintage || 'NV'}</td>
@@ -587,7 +587,7 @@ const WineCellar = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-2 py-1.5">
+                      <td className="hidden sm:table-cell px-2 py-1.5">
                         {(() => {
                           const { myRating, average, count } = getRatingInfo(getWineKey(wine));
                           if (myRating) return <StarRating rating={myRating} size="sm" />;
