@@ -22,6 +22,7 @@ const WineCellar = () => {
   const { user, signOut } = useAuth();
   const { getRatingInfo, setRating } = useRatings(user);
   const { producers: catalogProducers, getWineNames: getCatalogWineNames } = useCatalog();
+  const [wineData, setWineData] = useState([]);
 
   const allProducers = useMemo(() =>
     [...new Set([...catalogProducers, ...wineData.map(w => w.producer)])].sort(),
@@ -35,7 +36,6 @@ const WineCellar = () => {
       : wineData.map(w => w.name);
     return [...new Set([...fromCatalog, ...fromCollection])].sort();
   }, [getCatalogWineNames, wineData]);
-  const [wineData, setWineData] = useState([]);
   const [winesLoading, setWinesLoading] = useState(true);
 
   const DEFAULT_RACK = { id: 'rack-1', name: 'Main Rack', rows: 10, cols: 12, layout: {} };
