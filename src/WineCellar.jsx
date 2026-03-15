@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import RackView from './RackView';
 import { TASTING_NOTES, DEFAULT_TASTING_NOTES, getPairingsForWine } from './data';
@@ -37,6 +37,7 @@ const WineCellar = () => {
     return [...new Set([...fromCatalog, ...fromCollection])].sort();
   }, [getCatalogWineNames, wineData]);
   const [winesLoading, setWinesLoading] = useState(true);
+  const catalogSynced = useRef(false);
 
   const DEFAULT_RACK = { id: 'rack-1', name: 'Main Rack', rows: 10, cols: 12, layout: {} };
   const [racks, setRacks] = useState([DEFAULT_RACK]);
@@ -46,7 +47,8 @@ const WineCellar = () => {
     if (!user) return;
     const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (snapshot) => {
       const data = snapshot.data();
-      setWineData(data?.wines ?? []);
+      const wines = data?.wines ?? [];
+      setWineData(wines);
       if (data?.racks) {
         setRacks(data.racks);
       } else if (data?.rackLayout) {
@@ -54,6 +56,17 @@ const WineCellar = () => {
         setRacks([{ ...DEFAULT_RACK, layout: data.rackLayout, rows: data?.rackDimensions?.rows ?? 10, cols: data?.rackDimensions?.cols ?? 12 }]);
       }
       setWinesLoading(false);
+
+      // Backfill catalog with any pre-existing wines not added through the UI
+      if (!catalogSynced.current && wines.length > 0) {
+        catalogSynced.current = true;
+        const producers = [...new Set(wines.map(w => w.producer))];
+        const entries = [...new Set(wines.map(w => `${w.producer}||${w.name}`))];
+        setDoc(doc(db, 'catalog', 'wines'), {
+          producers: arrayUnion(...producers),
+          entries: arrayUnion(...entries),
+        }, { merge: true });
+      }
     });
     return unsubscribe;
   }, [user]);
