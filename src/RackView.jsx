@@ -350,7 +350,7 @@ const RackView = ({ wines, colors, rackLayout, onRackLayoutChange, rackRows, onR
           <div className="text-gray-400 text-xs mt-1.5">
             {tooltip.wine.vintage ?? 'NV'} · {tooltip.wine.varietal}
           </div>
-          <div className="text-gray-500 text-xs">{tooltip.wine.region}</div>
+          <div className="text-gray-500 text-xs">{tooltip.wine.state}</div>
           <div className="flex items-center gap-2 mt-2">
             <span className="text-yellow-400 font-bold text-xs">${tooltip.wine.estimatedPrice}</span>
             <span className="text-gray-600 text-xs">·</span>

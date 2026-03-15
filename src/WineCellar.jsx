@@ -21,7 +21,7 @@ import AddWineModal from './components/AddWineModal';
 const WineCellar = () => {
   const { user, signOut } = useAuth();
   const { getRatingInfo, setRating } = useRatings(user);
-  const { producers: catalogProducers, getWineNames: getCatalogWineNames } = useCatalog();
+  const { producers: catalogProducers, getWineNames: getCatalogWineNames, entries: catalogEntries } = useCatalog();
   const [wineData, setWineData] = useState([]);
 
   const allProducers = useMemo(() =>
@@ -87,6 +87,17 @@ const WineCellar = () => {
   const [activeView, setActiveView] = useState('dashboard');
   const [showAddWine, setShowAddWine] = useState(false);
   const [showEditWine, setShowEditWine] = useState(null);
+  const [addWinePrefill, setAddWinePrefill] = useState(null);
+  const [catalogQuery, setCatalogQuery] = useState('');
+
+  const catalogResults = useMemo(() => {
+    if (!catalogQuery.trim()) return [];
+    const q = catalogQuery.toLowerCase();
+    return catalogEntries
+      .filter(e => e.toLowerCase().includes(q))
+      .slice(0, 12)
+      .map(e => { const [producer, name] = e.split('||'); return { producer, name }; });
+  }, [catalogQuery, catalogEntries]);
 
   const updateCatalog = (wine) =>
     setDoc(doc(db, 'catalog', 'wines'), {
@@ -101,6 +112,7 @@ const WineCellar = () => {
       updateCatalog(wine),
     ]);
     setShowAddWine(false);
+    setAddWinePrefill(null);
   };
 
   const handleEditWine = async (originalWine, updatedWine) => {
@@ -412,6 +424,40 @@ const WineCellar = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="mb-4">
             <h2 className="text-sm font-black text-gray-900 uppercase tracking-tight mb-3">Complete Collection</h2>
+
+            <div className="relative mb-3">
+              <input
+                type="text"
+                placeholder="Search catalog (all users' wines)..."
+                value={catalogQuery}
+                onChange={e => setCatalogQuery(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-900 text-sm"
+              />
+              {catalogQuery && (
+                <button onClick={() => setCatalogQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xl font-bold">×</button>
+              )}
+              {catalogResults.length > 0 && (
+                <ul className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-64 overflow-auto">
+                  {catalogResults.map(({ producer, name }) => (
+                    <li
+                      key={`${producer}||${name}`}
+                      className="flex items-center justify-between px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                      onMouseDown={() => {
+                        setAddWinePrefill({ producer, name });
+                        setShowAddWine(true);
+                        setCatalogQuery('');
+                      }}
+                    >
+                      <span className="text-sm text-gray-900"><span className="font-semibold">{producer}</span> — {name}</span>
+                      <span className="text-xs text-gray-400 ml-3">Add →</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {catalogQuery.trim() && catalogResults.length === 0 && (
+                <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 px-4 py-3 text-sm text-gray-400">No catalog entries found</div>
+              )}
+            </div>
 
             <div className="flex flex-wrap gap-2 mb-2">
               <button
@@ -837,8 +883,9 @@ const WineCellar = () => {
 
       {showAddWine && (
         <AddWineModal
-          onClose={() => setShowAddWine(false)}
+          onClose={() => { setShowAddWine(false); setAddWinePrefill(null); }}
           onSave={handleAddWine}
+          prefill={addWinePrefill}
           catalogProducers={allProducers}
           getCatalogWineNames={getWineNames}
         />

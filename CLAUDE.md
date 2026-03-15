@@ -168,6 +168,17 @@ Constants live in `src/constants.js`; utility functions in `src/utils.js`. Impor
 
 ## Known Tech Debt
 
-1. **Consolidate `DetailModal` boilerplate** — multiple modal invocations with identical `isOpen/onClose/title` pattern; consider a factory/wrapper.
-2. **Remove unused `DEFAULT_PAIRINGS` export** from `src/data.js` — only used internally by `getPairingsForWine`.
-3. **Replace magic strings with named constants** — `'dashboard'`, `'rack'`, `'Other'`, `'NV'` appear multiple times; should be constants.
+Ordered by priority:
+
+### Dead Code (easy wins)
+2. **Remove unused `prefill` param** from `AddWineModal.jsx:5` — destructured but never referenced; only `initialWine` is used.
+3. **Remove unused `DEFAULT_PAIRINGS` export** from `src/data.js` — only used internally by `getPairingsForWine`; should not be exported.
+
+### React Anti-patterns
+4. **Fix array-index key in WineList.jsx:9** — `<WineCard key={idx} ...>` should use `getWineKey(wine)` for stable identity.
+5. **Move `statusOrder` map out of render** in `useWineFiltering.js:54` — recreated on every sort call; hoist to module-level constant.
+
+### Tech Debt (larger)
+6. **Replace magic strings with named constants** — `'dashboard'`, `'rack'`, `'Other'`, `'NV'` appear 9+ times across files; should live in `constants.js`.
+7. **Consolidate `DetailModal` boilerplate** in `WineCellar.jsx:635–836` — 5 near-identical invocations with `isOpen={!!selectedX}` / `onClose={() => setSelectedX(null)}`; consider a factory helper.
+8. **Extract rowspan lookahead logic** from `WineCellar.jsx:514–535` into a utility function for readability.

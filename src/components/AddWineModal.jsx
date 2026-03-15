@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import AutocompleteInput from './AutocompleteInput';
 import { VARIETALS, WINE_REGIONS } from '../constants';
 
-const AddWineModal = ({ onClose, onSave, initialWine, catalogProducers, getCatalogWineNames }) => {
-  const empty = { producer: '', name: '', vintage: '', varietal: '', country: '', state: '', quantity: '1', estimatedPrice: '', drinkWindow: '' };
+const AddWineModal = ({ onClose, onSave, initialWine, prefill, catalogProducers, getCatalogWineNames }) => {
+  const empty = { producer: prefill?.producer ?? '', name: prefill?.name ?? '', vintage: '', varietal: '', country: '', state: '', quantity: '1', estimatedPrice: '', drinkWindow: '' };
   const [form, setForm] = useState(() => initialWine ? {
     producer: initialWine.producer,
     name: initialWine.name,

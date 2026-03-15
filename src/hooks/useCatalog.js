@@ -39,5 +39,5 @@ export function useCatalog() {
     )].sort();
   };
 
-  return { producers, getWineNames };
+  return { producers, getWineNames, entries: data.entries };
 }
