@@ -22,6 +22,19 @@ const WineCellar = () => {
   const { user, signOut } = useAuth();
   const { getRatingInfo, setRating } = useRatings(user);
   const { producers: catalogProducers, getWineNames: getCatalogWineNames } = useCatalog();
+
+  const allProducers = useMemo(() =>
+    [...new Set([...catalogProducers, ...wineData.map(w => w.producer)])].sort(),
+    [catalogProducers, wineData]
+  );
+
+  const getWineNames = useMemo(() => (producer) => {
+    const fromCatalog = getCatalogWineNames(producer);
+    const fromCollection = producer
+      ? wineData.filter(w => w.producer === producer).map(w => w.name)
+      : wineData.map(w => w.name);
+    return [...new Set([...fromCatalog, ...fromCollection])].sort();
+  }, [getCatalogWineNames, wineData]);
   const [wineData, setWineData] = useState([]);
   const [winesLoading, setWinesLoading] = useState(true);
 
@@ -816,8 +829,8 @@ const WineCellar = () => {
         <AddWineModal
           onClose={() => setShowAddWine(false)}
           onSave={handleAddWine}
-          catalogProducers={catalogProducers}
-          getCatalogWineNames={getCatalogWineNames}
+          catalogProducers={allProducers}
+          getCatalogWineNames={getWineNames}
         />
       )}
       {showEditWine && (
@@ -825,8 +838,8 @@ const WineCellar = () => {
           onClose={() => setShowEditWine(null)}
           onSave={(updated) => handleEditWine(showEditWine, updated)}
           initialWine={showEditWine}
-          catalogProducers={catalogProducers}
-          getCatalogWineNames={getCatalogWineNames}
+          catalogProducers={allProducers}
+          getCatalogWineNames={getWineNames}
         />
       )}
     </div>
