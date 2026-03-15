@@ -25,7 +25,7 @@ export const VARIETALS = {
     'Pinot Noir', 'Sangiovese', 'Syrah', 'Tempranillo', 'Zinfandel',
   ],
   'White': [
-    'Albariño', 'Chardonnay', 'Chenin Blanc', 'Gewürztraminer', 'Grüner Veltliner',
+    'Albariño', 'Chablis', 'Chardonnay', 'Chenin Blanc', 'Gewürztraminer', 'Grüner Veltliner',
     'Marsanne', 'Muscat', 'Pinot Gris', 'Riesling', 'Roussanne',
     'Sauvignon Blanc', 'Viognier',
   ],
