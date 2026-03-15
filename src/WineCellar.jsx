@@ -5,6 +5,7 @@ import { TASTING_NOTES, DEFAULT_TASTING_NOTES, getPairingsForWine } from './data
 import { useAuth } from './AuthContext';
 import { db } from './firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { useRatings } from './hooks/useRatings';
 
 // ============================================================================
 // CONSTANTS & DATA
@@ -138,8 +139,34 @@ const WINE_REGIONS = {
 // MAIN COMPONENT
 // ============================================================================
 
+const StarRating = ({ rating, onRate, size = 'md' }) => {
+  const [hovered, setHovered] = useState(null);
+  const sizeClass = size === 'sm' ? 'text-base' : 'text-2xl';
+  const active = hovered ?? rating;
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onRate?.(star === rating ? null : star)}
+          onMouseEnter={() => onRate && setHovered(star)}
+          onMouseLeave={() => onRate && setHovered(null)}
+          className={`${sizeClass} leading-none transition-all ${
+            active >= star ? 'text-amber-400' : 'text-gray-300'
+          } ${onRate ? 'cursor-pointer hover:scale-110' : 'cursor-default'}`}
+          disabled={!onRate}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+};
+
 const WineCellar = () => {
   const { user, signOut } = useAuth();
+  const { getRatingInfo, setRating } = useRatings(user);
   const [wineData, setWineData] = useState([]);
   const [winesLoading, setWinesLoading] = useState(true);
 
@@ -1047,6 +1074,7 @@ const WineCellar = () => {
                   >
                     Drink Window {sortColumn === 'drinkability' && (sortDirection === 'asc' ? '↑' : '↓')}
                   </th>
+                  <th className="px-2 py-2 font-black text-gray-900 text-xs uppercase tracking-wider text-left">Rating</th>
                   <th className="px-2 py-2"></th>
                 </tr>
               </thead>
@@ -1134,6 +1162,18 @@ const WineCellar = () => {
                             Peak: {getPeakYear(wine)}
                           </div>
                         </div>
+                      </td>
+                      <td className="px-2 py-1.5">
+                        {(() => {
+                          const { myRating, average, count } = getRatingInfo(getWineKey(wine));
+                          if (myRating) return <StarRating rating={myRating} size="sm" />;
+                          if (count > 0) return (
+                            <div className="flex items-center gap-1 text-gray-400">
+                              <StarRating rating={Math.round(average)} size="sm" />
+                            </div>
+                          );
+                          return null;
+                        })()}
                       </td>
                       <td className="px-2 py-1.5 text-right">
                         <button
@@ -1301,6 +1341,34 @@ const WineCellar = () => {
                 })()}
               </div>
             </div>
+
+            {(() => {
+              const { myRating, average, count } = getRatingInfo(getWineKey(selectedWine));
+              return (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-black text-gray-900 uppercase mb-3">Ratings</h3>
+                  <div className="flex items-start gap-8">
+                    <div>
+                      <div className="text-xs text-gray-500 uppercase tracking-widest mb-1.5">Your Rating</div>
+                      <StarRating
+                        rating={myRating}
+                        onRate={(r) => setRating(getWineKey(selectedWine), r)}
+                      />
+                    </div>
+                    {count > 0 && (
+                      <div>
+                        <div className="text-xs text-gray-500 uppercase tracking-widest mb-1.5">Community</div>
+                        <div className="flex items-center gap-2">
+                          <StarRating rating={Math.round(average)} size="sm" />
+                          <span className="text-sm font-bold text-gray-900">{average.toFixed(1)}</span>
+                          <span className="text-xs text-gray-500">({count})</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="bg-blue-50 rounded-lg p-4">
               <h3 className="text-sm font-black text-gray-900 uppercase mb-2">Tasting Notes</h3>
