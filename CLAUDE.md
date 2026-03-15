@@ -93,23 +93,30 @@ Rack dimensions stored in localStorage under `cellar_rack_dimensions`:
 - **Auth**: `src/AuthContext.jsx` wraps the app in a Firebase auth provider. `src/LoginPage.jsx` handles the Google sign-in UI. Unauthenticated users see only the login page.
 - **Firestore**: Wine data is loaded via `onSnapshot` on `users/{uid}` and written back with `setDoc(..., { merge: true })`. This is real-time and per-user.
 - **Static data**: `src/data.js` still contains `WINE_PAIRINGS`, `TASTING_NOTES`, and `getPairingsForWine`. These are UI-only lookups, not stored in Firestore.
-- `COLORS` array is defined in `src/WineCellar.jsx` and passed as props to child components that need it (`RackView`).
+- `COLORS` array is defined in `src/constants.js` and imported where needed (including `RackView`).
 - Firebase config lives in `src/firebase.js` and is sourced from `.env` (`VITE_FIREBASE_*` variables — see `.env.example`).
 - Deploy with `npm run build`; GitHub Actions handles publishing to Pages on push to `master`.
 - API key for AI features goes in `.env` as `VITE_ANTHROPIC_API_KEY` (see `.env.example`).
 
-## Key Constants & Utilities (src/WineCellar.jsx)
+## Key Constants & Utilities
 
-These are module-level and should be reused rather than redefined:
+Constants live in `src/constants.js`; utility functions in `src/utils.js`. Import from there — do not redefine.
 
+**`src/constants.js`**
 - **`CONFIG`** — central thresholds: `SPECIAL_BOTTLE_THRESHOLD` ($70, blue highlight), `OTHER_THRESHOLD` (5% of total, for collapsing small segments into "Other"), `MIN_SEGMENT_DISPLAY` (3 bottles min to show label), `CURRENT_YEAR`
 - **`DRINKABILITY_STATUS`** — enum: `'Final Year'`, `'Ready Now'`, `'Age 1-5 Years'`, `'Age 5+ Years'`
-- **`COLORS`** — 18-color array for varietal/country visualization and rack bottle tokens; use `getColorByIndex(i)` to cycle through it
+- **`COLORS`** — 18-color array for varietal/country visualization and rack bottle tokens
+- **`VARIETALS`** — grouped varietal options used in the Add/Edit Wine form
+- **`WINE_REGIONS`** — country → region/state options used in the Add/Edit Wine form
+
+**`src/utils.js`**
+- **`getColorByIndex(i)`** — cycles through `COLORS` array by index
 - **`getWineKey(wine)`** — canonical identity key: `"producer-name-vintage"`; use for React keys and any wine lookup maps
 - **`getDrinkabilityStatus(wine)`** — returns a `DRINKABILITY_STATUS` value based on `drinkWindow` vs `CURRENT_YEAR`
 - **`isSpecialBottle(wine)`** — returns `true` if `estimatedPrice > $70` (triggers blue highlight)
-- **`extractCountry(region)`** — parses the last comma-separated token from a region string
 - **`aggregateData(items, keyExtractor, threshold)`** — groups wines by a key, collapses small groups into "Other"
+- **`sortWines(wines)`** — canonical sort: producer → name → vintage desc
+- **`getPeakYear(wine)`** — midpoint of drink window
 
 ## Code Health & Known Tech Debt
 
@@ -118,19 +125,18 @@ These are module-level and should be reused rather than redefined:
 - `CURRENT_YEAR` now uses `new Date().getFullYear()` (no manual updates needed)
 - Unused imports (`DEFAULT_PAIRINGS`, `WINE_PAIRINGS`) removed from `WineCellar.jsx`
 - React list keys fixed: `SegmentedBar` and `Legend` use `item.name`; table rows use `getWineKey(wine)`
+- `AddWineModal` extracted to `src/components/AddWineModal.jsx`
+- All nested components (`StatCard`, `SegmentedBar`, `Legend`, `SegmentedBarWithLegend`, `WineCard`, `DetailModal`, `WineList`, `RackTab`, `AutocompleteInput`, `StarRating`) extracted to `src/components/`
+- `getXxxDetails()` functions eliminated — filter logic inlined at `<WineList>` call sites
+- `filteredCellar` logic (with `handleSort`, `resetAllFilters`) extracted to `src/hooks/useWineFiltering.js`
+- Constants (`COLORS`, `CONFIG`, `DRINKABILITY_STATUS`, `VARIETALS`, `WINE_REGIONS`) moved to `src/constants.js`
+- Utility functions (`sortWines`, `aggregateData`, `isSpecialBottle`, `getColorByIndex`, `getDrinkabilityStatus`, `getPeakYear`, `getWineKey`) moved to `src/utils.js`
 
 ### Remaining tech debt (prioritized)
 
-#### High Priority
-1. **Extract `AddWineModal`** — lines 652–950 (~299 lines) in `WineCellar.jsx`; should move to `src/components/AddWineModal.jsx`.
-2. **Extract other nested components** — `StatCard`, `SegmentedBar`, `Legend`, `SegmentedBarWithLegend`, `WineCard`, `DetailModal`, `WineList`, `RackTab` are all defined inside `WineCellar.jsx`; should move to `src/components/`.
-3. **Consolidate `getXxxDetails()` functions** — `getCountryDetails`, `getVarietalDetails`, `getDrinkabilityDetails`, `getVintageDetails` (~lines 412–451) follow identical structure; replace with one generic function.
-4. **Extract `filteredCellar` into a custom hook** — ~68-line `useMemo` in `WineCellar.jsx`; should move to `src/hooks/useWineFiltering.js`.
-
 #### Medium Priority
-5. **Consolidate `DetailModal` boilerplate** — four modal invocations (~lines 1174–1216) with identical `isOpen/onClose/title` pattern; use a factory/wrapper component.
-6. **Move constants to `src/constants.js`** — `COLORS`, `CONFIG`, `DRINKABILITY_STATUS`, `VARIETALS`, `WINE_REGIONS` are defined in `WineCellar.jsx` (~lines 13–139) but should be importable across components.
+1. **Consolidate `DetailModal` boilerplate** — four modal invocations with identical `isOpen/onClose/title` pattern; use a factory/wrapper component.
 
 #### Low Priority / Quick Wins
-7. **Remove unused `DEFAULT_PAIRINGS` export** from `src/data.js` — only used internally by `getPairingsForWine`, never imported elsewhere.
-8. **Replace magic strings with named constants** — `'dashboard'`, `'rack'`, `'Other'`, `'NV'` each appear 3–5 times; should be constants (e.g. `VIEW_MODES`, `SPECIAL_VALUES`).
+2. **Remove unused `DEFAULT_PAIRINGS` export** from `src/data.js` — only used internally by `getPairingsForWine`, never imported elsewhere.
+3. **Replace magic strings with named constants** — `'dashboard'`, `'rack'`, `'Other'`, `'NV'` each appear 3–5 times; should be constants (e.g. `VIEW_MODES`, `SPECIAL_VALUES`).
