@@ -19,6 +19,7 @@ import WineList from './components/WineList';
 import RackTab from './components/RackTab';
 import AddWineModal from './components/AddWineModal';
 import SettingsModal from './components/SettingsModal';
+import SommelierView from './components/SommelierView';
 
 const WineCellar = () => {
   const { user, signOut } = useAuth();
@@ -307,6 +308,16 @@ const WineCellar = () => {
               >
                 Rack View
               </button>
+              <button
+                onClick={() => setActiveView('sommelier')}
+                className={`px-5 py-2 text-sm font-bold uppercase tracking-wider transition-colors ${
+                  activeView === 'sommelier'
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-white text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                Sommelier
+              </button>
             </div>
             <div className="flex items-center gap-2">
               {user.photoURL && (
@@ -332,6 +343,9 @@ const WineCellar = () => {
             </div>
           </div>
         </div>
+
+        {/* Sommelier View */}
+        {activeView === 'sommelier' && <SommelierView wines={wineData} />}
 
         {/* Rack View */}
         {activeView === 'rack' && (
