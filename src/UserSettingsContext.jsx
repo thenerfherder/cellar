@@ -3,6 +3,7 @@ import { CONFIG } from './constants';
 
 export const DEFAULT_SETTINGS = {
   specialBottleThreshold: CONFIG.SPECIAL_BOTTLE_THRESHOLD,
+  showValue: true,
 };
 
 export const UserSettingsContext = createContext({ settings: DEFAULT_SETTINGS, updateSettings: () => {} });

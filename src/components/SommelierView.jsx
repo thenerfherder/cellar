@@ -123,8 +123,22 @@ const STATUS_STYLES = {
   [DRINKABILITY_STATUS.AGE_5_PLUS]: 'bg-gray-50 text-gray-400 border border-gray-100',
 };
 
-export default function SommelierView({ wines }) {
+function getRackPositions(wine, wines, racks) {
+  const wineIdx = wines.findIndex(w => getWineKey(w) === getWineKey(wine));
+  if (wineIdx === -1 || !racks?.length) return [];
+  return racks.flatMap(rack =>
+    Object.entries(rack.layout)
+      .filter(([, occupant]) => occupant.wineIdx === wineIdx)
+      .map(([pos]) => {
+        const [row, col] = pos.split('-').map(Number);
+        return { label: String.fromCharCode(65 + col) + (row + 1), rackName: rack.name };
+      })
+  ).sort((a, b) => a.rackName.localeCompare(b.rackName) || a.label.localeCompare(b.label));
+}
+
+export default function SommelierView({ wines, racks }) {
   const [selectedDish, setSelectedDish] = useState(null);
+  const [occasion, setOccasion] = useState('casual');
 
   const recommendedVarietals = useMemo(() => {
     if (!selectedDish) return [];
@@ -146,13 +160,42 @@ export default function SommelierView({ wines }) {
       .sort((a, b) => {
         const orderDiff = DRINKABILITY_ORDER[getDrinkabilityStatus(a)] - DRINKABILITY_ORDER[getDrinkabilityStatus(b)];
         if (orderDiff !== 0) return orderDiff;
-        return b.estimatedPrice - a.estimatedPrice;
+        return occasion === 'fancy'
+          ? b.estimatedPrice - a.estimatedPrice
+          : a.estimatedPrice - b.estimatedPrice;
       });
-  }, [wines, recommendedVarietals]);
+  }, [wines, recommendedVarietals, occasion]);
 
   return (
     <div>
-      {/* Dish selector */}
+      {/* Occasion + Dish selector */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex rounded-lg overflow-hidden border border-gray-100">
+          <button
+            onClick={() => setOccasion('casual')}
+            className={`px-5 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+              occasion === 'casual'
+                ? 'bg-gray-900 text-white'
+                : 'bg-white text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            Casual
+          </button>
+          <button
+            onClick={() => setOccasion('fancy')}
+            className={`px-5 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+              occasion === 'fancy'
+                ? 'bg-gray-900 text-white'
+                : 'bg-white text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            Fancy
+          </button>
+        </div>
+        <p className="text-xs text-gray-300 uppercase tracking-widest">
+          {occasion === 'casual' ? 'Prioritising everyday bottles' : 'Prioritising special bottles'}
+        </p>
+      </div>
       <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3 mb-10">
         {DISH_CATEGORIES.map(dish => {
           const isSelected = selectedDish?.id === dish.id;
@@ -214,13 +257,15 @@ export default function SommelierView({ wines }) {
                 {recommendedBottles.map((wine, i) => {
                   const status = getDrinkabilityStatus(wine);
                   const special = isSpecialBottle(wine);
+                  const positions = getRackPositions(wine, wines, racks);
+                  const multiRack = racks?.length > 1;
                   return (
                     <div
                       key={getWineKey(wine)}
                       className={`flex items-center gap-5 py-4 border-b border-gray-50 ${special ? 'bg-blue-50/20' : ''}`}
                     >
                       <div className="w-8 shrink-0 text-right">
-                        <span className="text-xl font-black text-gray-150 tabular-nums" style={{ color: '#e8e8e8' }}>{i + 1}</span>
+                        <span className="text-xl font-black tabular-nums" style={{ color: '#e8e8e8' }}>{i + 1}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 flex-wrap">
@@ -240,6 +285,19 @@ export default function SommelierView({ wines }) {
                             </>
                           )}
                         </div>
+                        {positions.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {positions.map(({ label, rackName }, j) => (
+                              <span
+                                key={j}
+                                title={rackName}
+                                className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-bold rounded font-mono border border-amber-100"
+                              >
+                                {multiRack ? `${rackName} ${label}` : label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-2.5 shrink-0">
                         {wine.quantity > 1 && (
