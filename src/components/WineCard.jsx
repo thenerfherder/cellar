@@ -1,8 +1,10 @@
 import React from 'react';
 import { isSpecialBottle } from '../utils';
+import { useUserSettings } from '../UserSettingsContext';
 
 const WineCard = ({ wine, showDrinkWindow = false, onClick }) => {
-  const isSpecial = isSpecialBottle(wine);
+  const { settings } = useUserSettings();
+  const isSpecial = isSpecialBottle(wine, settings.specialBottleThreshold);
 
   return (
     <div

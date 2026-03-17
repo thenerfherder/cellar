@@ -10,6 +10,7 @@ import { useCatalog } from './hooks/useCatalog';
 import useWineFiltering from './hooks/useWineFiltering';
 import { COLORS, CONFIG, DRINKABILITY_STATUS } from './constants';
 import { sortWines, aggregateData, isSpecialBottle, getColorByIndex, getDrinkabilityStatus, getPeakYear, getWineKey } from './utils';
+import { UserSettingsContext, DEFAULT_SETTINGS } from './UserSettingsContext';
 import StatCard from './components/StatCard';
 import StarRating from './components/StarRating';
 import { SegmentedBarWithLegend } from './components/SegmentedBar';
@@ -17,6 +18,7 @@ import DetailModal from './components/DetailModal';
 import WineList from './components/WineList';
 import RackTab from './components/RackTab';
 import AddWineModal from './components/AddWineModal';
+import SettingsModal from './components/SettingsModal';
 
 const WineCellar = () => {
   const { user, signOut } = useAuth();
@@ -40,6 +42,8 @@ const WineCellar = () => {
   const DEFAULT_RACK = { id: 'rack-1', name: 'Main Rack', rows: 10, cols: 12, layout: {} };
   const [racks, setRacks] = useState([DEFAULT_RACK]);
   const [activeRackId, setActiveRackId] = useState('rack-1');
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -52,6 +56,9 @@ const WineCellar = () => {
       } else if (data?.rackLayout) {
         // Migrate from old single-rack format
         setRacks([{ ...DEFAULT_RACK, layout: data.rackLayout, rows: data?.rackDimensions?.rows ?? 10, cols: data?.rackDimensions?.cols ?? 12 }]);
+      }
+      if (data?.settings) {
+        setSettings({ ...DEFAULT_SETTINGS, ...data.settings });
       }
       setWinesLoading(false);
 
@@ -71,6 +78,12 @@ const WineCellar = () => {
   const saveRacks = async (newRacks) => {
     setRacks(newRacks);
     await setDoc(doc(db, 'users', user.uid), { racks: newRacks }, { merge: true });
+  };
+
+  const updateSettings = async (newSettings) => {
+    const merged = { ...settings, ...newSettings };
+    setSettings(merged);
+    await setDoc(doc(db, 'users', user.uid), { settings: merged }, { merge: true });
   };
 
   const activeRack = racks.find(r => r.id === activeRackId) ?? racks[0];
@@ -258,6 +271,7 @@ const WineCellar = () => {
   }
 
   return (
+    <UserSettingsContext.Provider value={{ settings, updateSettings }}>
     <div className="min-h-screen bg-white p-4 sm:p-6">
       <div className="max-w-7xl mx-auto">
         <div className="mb-6 sm:mb-10 flex items-end justify-between flex-wrap gap-4">
@@ -299,6 +313,16 @@ const WineCellar = () => {
                 <img src={user.photoURL} alt="" className="w-7 h-7 rounded-full" referrerPolicy="no-referrer" />
               )}
               <span className="text-xs text-gray-500 hidden sm:block">{user.displayName || user.email}</span>
+              <button
+                onClick={() => setShowSettings(true)}
+                title="Settings"
+                className="p-1.5 text-gray-400 hover:text-gray-700 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+              </button>
               <button
                 onClick={signOut}
                 className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors"
@@ -554,7 +578,7 @@ const WineCellar = () => {
               </thead>
               <tbody>
                 {filteredCellar.map((wine, index) => {
-                  const isSpecial = isSpecialBottle(wine);
+                  const isSpecial = isSpecialBottle(wine, settings.specialBottleThreshold);
                   const isFinalYear = getDrinkabilityStatus(wine) === DRINKABILITY_STATUS.FINAL_YEAR;
 
                   const useGrouping = !sortColumn;
@@ -751,7 +775,7 @@ const WineCellar = () => {
         title={
           <div className="flex items-center gap-2">
             <span>{selectedWine?.name}</span>
-            {selectedWine && isSpecialBottle(selectedWine) && (
+            {selectedWine && isSpecialBottle(selectedWine, settings.specialBottleThreshold) && (
               <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded uppercase">
                 Special
               </span>
@@ -899,7 +923,14 @@ const WineCellar = () => {
           getCatalogWineNames={getWineNames}
         />
       )}
+      <SettingsModal
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        settings={settings}
+        onSave={updateSettings}
+      />
     </div>
+    </UserSettingsContext.Provider>
   );
 };
 

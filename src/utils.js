@@ -34,7 +34,7 @@ export const aggregateData = (items, keyExtractor, threshold) => {
   return mainItems;
 };
 
-export const isSpecialBottle = (wine) => wine.estimatedPrice > CONFIG.SPECIAL_BOTTLE_THRESHOLD;
+export const isSpecialBottle = (wine, threshold = CONFIG.SPECIAL_BOTTLE_THRESHOLD) => wine.estimatedPrice > threshold;
 
 export const getColorByIndex = (index) => COLORS[index % COLORS.length];
 
