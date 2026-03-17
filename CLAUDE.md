@@ -171,8 +171,8 @@ Constants live in `src/constants.js`; utility functions in `src/utils.js`. Impor
 Ordered by priority:
 
 ### Dead Code (easy wins)
-2. **Remove unused `prefill` param** from `AddWineModal.jsx:5` — destructured but never referenced; only `initialWine` is used.
-3. **Remove unused `DEFAULT_PAIRINGS` export** from `src/data.js` — only used internally by `getPairingsForWine`; should not be exported.
+2. ~~**Remove unused `prefill` param**~~ — `prefill` is actively used; `setAddWinePrefill({ producer, name })` is called in `WineCellar.jsx:446`. Entry was incorrect.
+3. ~~**Remove unused `DEFAULT_PAIRINGS` export**~~ — fixed; now unexported.
 
 ### React Anti-patterns
 4. **Fix array-index key in WineList.jsx:9** — `<WineCard key={idx} ...>` should use `getWineKey(wine)` for stable identity.

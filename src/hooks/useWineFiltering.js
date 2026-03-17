@@ -3,6 +3,13 @@ import { getPairingsForWine } from '../data';
 import { getDrinkabilityStatus, getPeakYear } from '../utils';
 import { DRINKABILITY_STATUS, CONFIG } from '../constants';
 
+const STATUS_ORDER = {
+  [DRINKABILITY_STATUS.FINAL_YEAR]: 1,
+  [DRINKABILITY_STATUS.READY_NOW]: 2,
+  [DRINKABILITY_STATUS.AGE_1_5]: 3,
+  [DRINKABILITY_STATUS.AGE_5_PLUS]: 4
+};
+
 const useWineFiltering = (sortedCellar) => {
   const [pairingFilter, setPairingFilter] = useState('');
   const [activeFilter, setActiveFilter] = useState(null);
@@ -51,14 +58,8 @@ const useWineFiltering = (sortedCellar) => {
             bVal = b.vintage || 0;
             break;
           case 'drinkability': {
-            const statusOrder = {
-              [DRINKABILITY_STATUS.FINAL_YEAR]: 1,
-              [DRINKABILITY_STATUS.READY_NOW]: 2,
-              [DRINKABILITY_STATUS.AGE_1_5]: 3,
-              [DRINKABILITY_STATUS.AGE_5_PLUS]: 4
-            };
-            aVal = statusOrder[getDrinkabilityStatus(a)] || 5;
-            bVal = statusOrder[getDrinkabilityStatus(b)] || 5;
+            aVal = STATUS_ORDER[getDrinkabilityStatus(a)] || 5;
+            bVal = STATUS_ORDER[getDrinkabilityStatus(b)] || 5;
             break;
           }
           case 'quantity':
