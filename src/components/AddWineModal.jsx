@@ -16,12 +16,31 @@ const AddWineModal = ({ onClose, onSave, initialWine, prefill, catalogProducers,
     drinkWindow: initialWine.drinkWindow,
   } : empty);
   const [saving, setSaving] = useState(false);
+  const [drinkWindowError, setDrinkWindowError] = useState('');
 
   const set = (field) => (e) => setForm(prev => ({ ...prev, [field]: e.target.value }));
+
+  const handleDrinkWindowChange = (e) => {
+    const val = e.target.value;
+    setForm(prev => ({ ...prev, drinkWindow: val }));
+    if (!val) {
+      setDrinkWindowError('');
+    } else if (!/^\d{4}-\d{4}$/.test(val)) {
+      setDrinkWindowError('Format must be YYYY-YYYY (e.g. 2024-2035)');
+    } else {
+      const [start, end] = val.split('-').map(Number);
+      if (end < start) {
+        setDrinkWindowError('End year must be ≥ start year');
+      } else {
+        setDrinkWindowError('');
+      }
+    }
+  };
   const setCountry = (e) => setForm(prev => ({ ...prev, country: e.target.value, state: '' }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (drinkWindowError) return;
     setSaving(true);
     await onSave({
       producer: form.producer.trim(),
@@ -125,7 +144,17 @@ const AddWineModal = ({ onClose, onSave, initialWine, prefill, catalogProducers,
               </select>
             </div>
           </div>
-          {field('Drink Window', 'drinkWindow', { required: true, placeholder: 'e.g. 2024-2035', pattern: '\\d{4}-\\d{4}' })}
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Drink Window</label>
+            <input
+              required
+              value={form.drinkWindow}
+              onChange={handleDrinkWindowChange}
+              placeholder="e.g. 2024-2035"
+              className={`w-full px-3 py-2 border rounded-lg text-gray-900 focus:outline-none text-sm ${drinkWindowError ? 'border-red-400 focus:border-red-500' : 'border-gray-300 focus:border-gray-900'}`}
+            />
+            {drinkWindowError && <p className="mt-1 text-xs text-red-500">{drinkWindowError}</p>}
+          </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-bold uppercase tracking-wider text-gray-500 hover:text-gray-900 border border-gray-200 rounded-lg hover:border-gray-400 transition-colors">
               Cancel
