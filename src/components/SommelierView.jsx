@@ -70,42 +70,81 @@ const DISH_CATEGORIES = [
     label: 'Red Meat',
     keywords: ['steak', 'beef', 'lamb', 'brisket', 'venison', 'ribs', 'short ribs', 'wild game', 'game', 'chorizo', 'chops'],
     Icon: RedMeatIcon,
+    subCategories: [
+      { id: 'steak', label: 'Steak', keywords: ['steak', 'beef'] },
+      { id: 'lamb', label: 'Lamb', keywords: ['lamb', 'chops'] },
+      { id: 'ribs', label: 'Ribs & Brisket', keywords: ['ribs', 'short ribs', 'brisket'] },
+      { id: 'game', label: 'Game', keywords: ['venison', 'wild game', 'game'] },
+      { id: 'chorizo', label: 'Chorizo', keywords: ['chorizo'] },
+    ],
   },
   {
     id: 'poultry',
     label: 'Poultry',
     keywords: ['chicken', 'duck', 'turkey'],
     Icon: PoultryIcon,
+    subCategories: [
+      { id: 'chicken', label: 'Chicken', keywords: ['chicken'] },
+      { id: 'duck', label: 'Duck', keywords: ['duck'] },
+      { id: 'turkey', label: 'Turkey', keywords: ['turkey'] },
+    ],
   },
   {
     id: 'fish',
     label: 'Fish',
     keywords: ['salmon', 'fish', 'trout'],
     Icon: FishIcon,
+    subCategories: [
+      { id: 'salmon', label: 'Salmon', keywords: ['salmon'] },
+      { id: 'trout', label: 'Trout', keywords: ['trout'] },
+      { id: 'white-fish', label: 'White Fish', keywords: ['fish'] },
+    ],
   },
   {
     id: 'seafood',
     label: 'Seafood',
     keywords: ['oyster', 'caviar', 'sushi', 'shrimp', 'seafood', 'lobster', 'ceviche'],
     Icon: SeafoodIcon,
+    subCategories: [
+      { id: 'oysters', label: 'Oysters', keywords: ['oyster'] },
+      { id: 'lobster', label: 'Lobster', keywords: ['lobster', 'seafood'] },
+      { id: 'shrimp', label: 'Shrimp', keywords: ['shrimp'] },
+      { id: 'sushi', label: 'Sushi', keywords: ['sushi', 'ceviche'] },
+      { id: 'caviar', label: 'Caviar', keywords: ['caviar'] },
+    ],
   },
   {
     id: 'pasta',
     label: 'Pasta & Pizza',
     keywords: ['pasta', 'pizza', 'risotto', 'bolognese', 'osso buco'],
     Icon: PastaIcon,
+    subCategories: [
+      { id: 'pasta', label: 'Pasta', keywords: ['pasta', 'bolognese', 'osso buco'] },
+      { id: 'pizza', label: 'Pizza', keywords: ['pizza'] },
+      { id: 'risotto', label: 'Risotto', keywords: ['risotto'] },
+    ],
   },
   {
     id: 'cheese',
     label: 'Cheese',
     keywords: ['cheese', 'charcuterie'],
     Icon: CheeseIcon,
+    subCategories: [
+      { id: 'cheese', label: 'Cheese', keywords: ['cheese'] },
+      { id: 'charcuterie', label: 'Charcuterie', keywords: ['charcuterie'] },
+    ],
   },
   {
     id: 'vegetables',
     label: 'Vegetables',
     keywords: ['vegetable', 'ratatouille', 'salad', 'mediterranean', 'herb', 'roasted vegetables', 'mushroom'],
     Icon: VegetablesIcon,
+    subCategories: [
+      { id: 'salad', label: 'Salad', keywords: ['salad'] },
+      { id: 'mushrooms', label: 'Mushrooms', keywords: ['mushroom'] },
+      { id: 'roasted', label: 'Roasted Veg', keywords: ['roasted vegetables', 'vegetable', 'ratatouille'] },
+      { id: 'mediterranean', label: 'Mediterranean', keywords: ['mediterranean', 'herb'] },
+    ],
   },
 ];
 
@@ -138,26 +177,29 @@ function getRackPositions(wine, wines, racks) {
 
 export default function SommelierView({ wines, racks }) {
   const [selectedDish, setSelectedDish] = useState(null);
+  const [selectedSub, setSelectedSub] = useState(null);
   const [occasion, setOccasion] = useState('casual');
+
+  const activeKeywords = selectedSub ? selectedSub.keywords : selectedDish?.keywords ?? [];
 
   const varietalScores = useMemo(() => {
     if (!selectedDish) return {};
     const scores = {};
     Object.entries(WINE_PAIRINGS).forEach(([varietal, pairings]) => {
       const matchCount = pairings.filter(food =>
-        selectedDish.keywords.some(kw => food.toLowerCase().includes(kw.toLowerCase()))
+        activeKeywords.some(kw => food.toLowerCase().includes(kw.toLowerCase()))
       ).length;
       if (matchCount > 0) scores[varietal] = matchCount;
     });
     return scores;
-  }, [selectedDish]);
+  }, [selectedDish, activeKeywords]);
 
   const recommendedVarietals = useMemo(() => Object.keys(varietalScores), [varietalScores]);
 
   const getMatchReasons = (wine) => {
     if (!selectedDish) return [];
     return getPairingsForWine(wine).filter(food =>
-      selectedDish.keywords.some(kw => food.toLowerCase().includes(kw.toLowerCase()))
+      activeKeywords.some(kw => food.toLowerCase().includes(kw.toLowerCase()))
     );
   };
 
@@ -206,13 +248,21 @@ export default function SommelierView({ wines, racks }) {
           {occasion === 'casual' ? 'Prioritising everyday bottles' : 'Prioritising special bottles'}
         </p>
       </div>
-      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3 mb-10">
+      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3 mb-4">
         {DISH_CATEGORIES.map(dish => {
           const isSelected = selectedDish?.id === dish.id;
           return (
             <button
               key={dish.id}
-              onClick={() => setSelectedDish(isSelected ? null : dish)}
+              onClick={() => {
+                if (isSelected) {
+                  setSelectedDish(null);
+                  setSelectedSub(null);
+                } else {
+                  setSelectedDish(dish);
+                  setSelectedSub(null);
+                }
+              }}
               className={`flex flex-col items-center gap-2.5 py-5 px-2 rounded-xl border transition-all ${
                 isSelected
                   ? 'bg-gray-900 text-white border-gray-900 shadow-md'
@@ -226,6 +276,28 @@ export default function SommelierView({ wines, racks }) {
         })}
       </div>
 
+      {/* Sub-category filter */}
+      {selectedDish && (
+        <div className="flex flex-wrap gap-2 mb-8">
+          {selectedDish.subCategories.map(sub => {
+            const isActive = selectedSub?.id === sub.id;
+            return (
+              <button
+                key={sub.id}
+                onClick={() => setSelectedSub(isActive ? null : sub)}
+                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full border transition-all ${
+                  isActive
+                    ? 'bg-gray-900 text-white border-gray-900'
+                    : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600'
+                }`}
+              >
+                {sub.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {!selectedDish ? (
         <div className="flex items-center justify-center py-24">
           <p className="text-gray-200 text-xs uppercase tracking-widest">Select a dish to get started</p>
@@ -237,14 +309,17 @@ export default function SommelierView({ wines, racks }) {
             <div className="mb-8">
               <p className="text-xs font-black uppercase tracking-widest text-gray-300 mb-3">Target Varietals</p>
               <div className="flex flex-wrap gap-2">
-                {recommendedVarietals.map(v => (
-                  <span
-                    key={v}
-                    className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider bg-gray-50 text-gray-600 rounded-full border border-gray-100"
-                  >
-                    {v}
-                  </span>
-                ))}
+                {Object.entries(varietalScores)
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 5)
+                  .map(([v]) => (
+                    <span
+                      key={v}
+                      className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider bg-gray-50 text-gray-600 rounded-full border border-gray-100"
+                    >
+                      {v}
+                    </span>
+                  ))}
               </div>
             </div>
           )}
