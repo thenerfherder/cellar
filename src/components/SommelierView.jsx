@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { WINE_PAIRINGS } from '../data';
+import { WINE_PAIRINGS, getPairingsForWine } from '../data';
 import { getDrinkabilityStatus, getWineKey, isSpecialBottle } from '../utils';
 import { DRINKABILITY_STATUS } from '../constants';
 
@@ -80,13 +80,13 @@ const DISH_CATEGORIES = [
   {
     id: 'fish',
     label: 'Fish',
-    keywords: ['salmon', 'fish', 'lobster', 'trout'],
+    keywords: ['salmon', 'fish', 'trout'],
     Icon: FishIcon,
   },
   {
     id: 'seafood',
     label: 'Seafood',
-    keywords: ['oyster', 'caviar', 'sushi', 'shrimp', 'seafood'],
+    keywords: ['oyster', 'caviar', 'sushi', 'shrimp', 'seafood', 'lobster', 'ceviche'],
     Icon: SeafoodIcon,
   },
   {
@@ -156,7 +156,7 @@ export default function SommelierView({ wines, racks }) {
 
   const getMatchReasons = (wine) => {
     if (!selectedDish) return [];
-    return (WINE_PAIRINGS[wine.varietal] ?? []).filter(food =>
+    return getPairingsForWine(wine).filter(food =>
       selectedDish.keywords.some(kw => food.toLowerCase().includes(kw.toLowerCase()))
     );
   };
