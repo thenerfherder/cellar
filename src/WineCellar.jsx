@@ -21,7 +21,6 @@ import AddWineModal from './components/AddWineModal';
 import SettingsModal from './components/SettingsModal';
 import SommelierView from './components/SommelierView';
 import CellarAdvisorView from './components/CellarAdvisorView';
-import WorldMap from './components/WorldMap';
 
 const WineCellar = () => {
   const { user, signOut } = useAuth();
@@ -421,7 +420,7 @@ const WineCellar = () => {
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Country</h2>
-              <WorldMap data={regionData} onClick={setSelectedCountry} />
+              <SegmentedBarWithLegend data={regionData} onClick={setSelectedCountry} />
             </div>
           </div>
 

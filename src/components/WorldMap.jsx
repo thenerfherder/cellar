@@ -39,12 +39,24 @@ const NAME_ALIASES = {
   "Korea": "South Korea",
 };
 
+const REGIONS = [
+  { id: 'world',         label: 'World',      scale: 165,  center: [10, 15]   },
+  { id: 'europe',        label: 'Europe',     scale: 600,  center: [15, 50]   },
+  { id: 'north-america', label: 'N. America', scale: 330,  center: [-95, 45]  },
+  { id: 'south-america', label: 'S. America', scale: 380,  center: [-60, -20] },
+  { id: 'oceania',       label: 'Oceania',    scale: 500,  center: [140, -30] },
+  { id: 'africa',        label: 'Africa',     scale: 400,  center: [22, 2]    },
+];
+
 function normalizeCountry(name) {
   return NAME_ALIASES[name] ?? name;
 }
 
 export default function WorldMap({ data, onClick }) {
   const [tooltip, setTooltip] = useState(null);
+  const [regionId, setRegionId] = useState('world');
+
+  const region = REGIONS.find(r => r.id === regionId);
 
   // Build lookup: normalized country name → bottle count
   const countsByCountry = {};
@@ -57,10 +69,8 @@ export default function WorldMap({ data, onClick }) {
   function getColor(geoId) {
     const countryName = ISO_TO_NAME[String(geoId)];
     const count = countsByCountry[countryName];
-    if (!count) return '#e5e7eb'; // gray-200 for empty
-    // Burgundy/wine color scale: light pink → deep burgundy
+    if (!count) return '#e5e7eb';
     const intensity = count / maxCount;
-    // Interpolate from #f3d4de (light) to #7c1b3a (deep burgundy)
     const r = Math.round(243 - intensity * (243 - 124));
     const g = Math.round(212 - intensity * (212 - 27));
     const b = Math.round(222 - intensity * (222 - 58));
@@ -76,9 +86,26 @@ export default function WorldMap({ data, onClick }) {
 
   return (
     <div className="relative">
+      {/* Region toggles */}
+      <div className="flex gap-1 mb-2 flex-wrap">
+        {REGIONS.map(r => (
+          <button
+            key={r.id}
+            onClick={() => setRegionId(r.id)}
+            className={`px-2 py-0.5 text-xs font-bold tracking-wide uppercase rounded transition-colors ${
+              regionId === r.id
+                ? 'bg-gray-800 text-white'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
+          >
+            {r.label}
+          </button>
+        ))}
+      </div>
+
       <ComposableMap
-        projectionConfig={{ scale: 210, center: [10, 15] }}
-        style={{ width: '100%', height: '340px' }}
+        projectionConfig={{ scale: region.scale, center: region.center }}
+        style={{ width: '100%', height: '320px' }}
       >
         <Geographies geography={GEO_URL}>
           {({ geographies }) =>
@@ -101,12 +128,7 @@ export default function WorldMap({ data, onClick }) {
                   onClick={() => handleClick(geo)}
                   onMouseEnter={(e) => {
                     if (countryName) {
-                      setTooltip({
-                        name: countryName,
-                        count,
-                        x: e.clientX,
-                        y: e.clientY,
-                      });
+                      setTooltip({ name: countryName, count, x: e.clientX, y: e.clientY });
                     }
                   }}
                   onMouseMove={(e) => {
