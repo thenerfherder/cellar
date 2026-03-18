@@ -96,6 +96,7 @@ const WineCellar = () => {
   const [selectedVarietal, setSelectedVarietal] = useState(null);
   const [selectedDrinkability, setSelectedDrinkability] = useState(null);
   const [selectedVintage, setSelectedVintage] = useState(null);
+  const [selectedPeakYear, setSelectedPeakYear] = useState(null);
   const [selectedWine, setSelectedWine] = useState(null);
 
   const [activeView, setActiveView] = useState('dashboard');
@@ -482,7 +483,7 @@ const WineCellar = () => {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="value" onClick={(data) => setSelectedVintage(data.name)} className="cursor-pointer">
+                  <Bar dataKey="value" onClick={(data) => setSelectedPeakYear(data.name)} className="cursor-pointer">
                     {peakData.map((_entry, index) => (
                       <Cell
                         key={`cell-${index}`}
@@ -802,16 +803,28 @@ const WineCellar = () => {
           isOpen={!!selectedVintage}
           onClose={() => setSelectedVintage(null)}
           title={selectedVintage}
-          subtitle={showPeakView ? "Peak Year Collection" : "Vintage Collection"}
+          subtitle="Vintage Collection"
         >
           <WineList
-            wines={showPeakView
-              ? selectedVintage === 'Unknown'
-                ? wineData.filter(w => !getPeakYear(w))
-                : wineData.filter(w => getPeakYear(w) === parseInt(selectedVintage))
-              : selectedVintage === 'NV'
-                ? wineData.filter(w => w.vintage === null)
-                : wineData.filter(w => w.vintage === parseInt(selectedVintage))
+            wines={selectedVintage === 'NV'
+              ? wineData.filter(w => w.vintage === null)
+              : wineData.filter(w => w.vintage === parseInt(selectedVintage))
+            }
+            showDrinkWindow
+            onWineClick={setSelectedWine}
+          />
+        </DetailModal>
+
+        <DetailModal
+          isOpen={!!selectedPeakYear}
+          onClose={() => setSelectedPeakYear(null)}
+          title={selectedPeakYear}
+          subtitle="Peak Year Collection"
+        >
+          <WineList
+            wines={selectedPeakYear === 'Unknown'
+              ? wineData.filter(w => !getPeakYear(w))
+              : wineData.filter(w => getPeakYear(w) === parseInt(selectedPeakYear))
             }
             showDrinkWindow
             onWineClick={setSelectedWine}
