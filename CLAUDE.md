@@ -185,27 +185,48 @@ All three pairing-related features share a single source of truth: `WINE_PAIRING
 - Free-text substring match against the pairing strings (e.g. searching "lamb" surfaces all wines whose pairings include "lamb").
 
 ### Sommelier View (`src/components/SommelierView.jsx`)
-Works the **reverse direction**: given a dish category, finds matching wines.
+Works the **reverse direction**: given a dish category (and optional sub-category), finds matching wines.
 
-1. **Score each varietal** (`varietalScores`): count how many of its `WINE_PAIRINGS` entries contain a keyword from the selected dish category. A varietal scoring 3 matches ranks above one scoring 1.
+1. **Score each varietal** (`varietalScores`): count how many of its `WINE_PAIRINGS` entries contain a keyword from the **active keywords** (sub-category keywords if one is selected, otherwise the full category keywords). A varietal scoring 3 matches ranks above one scoring 1.
 2. **Filter cellar** to wines whose varietal has score > 0.
 3. **Sort** by three tiers:
    - Drinkability status: Final Year → Ready Now → Age 1-5 → Age 5+
    - Match score descending (better pairing fit first, within same drinkability)
    - Price: ascending for Casual, descending for Fancy
 4. **Top result** is labelled "Pick". Each wine shows `· good with X, Y` (the matched food strings) inline.
+5. **Target Varietals** shows up to 5 varietals, sorted by match score descending.
 
-**Dish categories and their keywords** (case-insensitive substring match against pairing strings):
+**Three-level filtering**: Casual/Fancy → primary dish category → optional sub-category. Selecting a sub-category narrows `activeKeywords`; deselecting returns to the full category keywords.
 
-| Category | Keywords |
-|---|---|
-| Red Meat | steak, beef, lamb, brisket, venison, ribs, short ribs, wild game, game, chorizo, chops |
-| Poultry | chicken, duck, turkey |
-| Fish | salmon, fish, trout |
-| Seafood | oyster, caviar, sushi, shrimp, seafood, lobster, ceviche |
-| Pasta & Pizza | pasta, pizza, risotto, bolognese, osso buco |
-| Cheese | cheese, charcuterie |
-| Vegetables | vegetable, ratatouille, salad, mediterranean, herb, roasted vegetables, mushroom |
+**Dish categories, sub-categories, and their keywords** (case-insensitive substring match against pairing strings):
+
+| Category | Sub-category | Keywords |
+|---|---|---|
+| Red Meat | Steak | steak, beef |
+| Red Meat | Lamb | lamb, chops |
+| Red Meat | Ribs & Brisket | ribs, short ribs, brisket |
+| Red Meat | Game | venison, wild game, game |
+| Red Meat | Chorizo | chorizo |
+| Poultry | Chicken | chicken |
+| Poultry | Duck | duck |
+| Poultry | Turkey | turkey |
+| Fish | Salmon | salmon |
+| Fish | Trout | trout |
+| Fish | White Fish | fish |
+| Seafood | Oysters | oyster |
+| Seafood | Lobster | lobster, seafood |
+| Seafood | Shrimp | shrimp |
+| Seafood | Sushi | sushi, ceviche |
+| Seafood | Caviar | caviar |
+| Pasta & Pizza | Pasta | pasta, bolognese, osso buco |
+| Pasta & Pizza | Pizza | pizza |
+| Pasta & Pizza | Risotto | risotto |
+| Cheese | Cheese | cheese |
+| Cheese | Charcuterie | charcuterie |
+| Vegetables | Salad | salad |
+| Vegetables | Mushrooms | mushroom |
+| Vegetables | Roasted Veg | roasted vegetables, vegetable, ratatouille |
+| Vegetables | Mediterranean | mediterranean, herb |
 
 **Important**: when adding or editing pairing strings in `WINE_PAIRINGS`, ensure each entry contains at least one word from the keyword list above, so the wine will appear in the Sommelier. Dessert/fortified wines (Port, Sauternes, Late Harvest Riesling) intentionally only match Cheese — that is correct culinary behaviour.
 

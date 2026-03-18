@@ -148,11 +148,11 @@ const DISH_CATEGORIES = [
   },
 ];
 
-const DRINKABILITY_ORDER = {
-  [DRINKABILITY_STATUS.FINAL_YEAR]: 0,
-  [DRINKABILITY_STATUS.READY_NOW]: 1,
-  [DRINKABILITY_STATUS.AGE_1_5]: 2,
-  [DRINKABILITY_STATUS.AGE_5_PLUS]: 3,
+const DRINKABILITY_BONUS = {
+  [DRINKABILITY_STATUS.FINAL_YEAR]: 4,
+  [DRINKABILITY_STATUS.READY_NOW]: 3,
+  [DRINKABILITY_STATUS.AGE_1_5]: 1,
+  [DRINKABILITY_STATUS.AGE_5_PLUS]: 0,
 };
 
 const STATUS_STYLES = {
@@ -203,14 +203,15 @@ export default function SommelierView({ wines, racks }) {
     );
   };
 
+  const compositeScore = (wine) =>
+    (varietalScores[wine.varietal] ?? 0) + DRINKABILITY_BONUS[getDrinkabilityStatus(wine)];
+
   const recommendedBottles = useMemo(() => {
     if (!recommendedVarietals.length) return [];
     return wines
       .filter(w => recommendedVarietals.includes(w.varietal))
       .sort((a, b) => {
-        const orderDiff = DRINKABILITY_ORDER[getDrinkabilityStatus(a)] - DRINKABILITY_ORDER[getDrinkabilityStatus(b)];
-        if (orderDiff !== 0) return orderDiff;
-        const scoreDiff = (varietalScores[b.varietal] ?? 0) - (varietalScores[a.varietal] ?? 0);
+        const scoreDiff = compositeScore(b) - compositeScore(a);
         if (scoreDiff !== 0) return scoreDiff;
         return occasion === 'fancy'
           ? b.estimatedPrice - a.estimatedPrice
@@ -337,80 +338,118 @@ export default function SommelierView({ wines, racks }) {
               <div className="py-16 text-center border border-dashed border-gray-100 rounded-xl">
                 <p className="text-gray-300 text-sm">No bottles in your cellar match this pairing</p>
               </div>
-            ) : (
-              <div>
-                {recommendedBottles.map((wine, i) => {
-                  const status = getDrinkabilityStatus(wine);
-                  const special = isSpecialBottle(wine);
-                  const positions = getRackPositions(wine, wines, racks);
-                  const multiRack = racks?.length > 1;
-                  const matchReasons = getMatchReasons(wine);
-                  const isTopPick = i === 0;
-                  return (
-                    <div
-                      key={getWineKey(wine)}
-                      className={`flex items-center gap-5 py-4 border-b border-gray-50 ${special ? 'bg-blue-50/20' : ''}`}
-                    >
-                      <div className="w-8 shrink-0 text-right">
-                        {isTopPick ? (
-                          <span className="text-xs font-black uppercase tracking-wider text-amber-400">Pick</span>
-                        ) : (
-                          <span className="text-xl font-black tabular-nums" style={{ color: '#e8e8e8' }}>{i + 1}</span>
+            ) : (() => {
+              const [topPick, ...rest] = recommendedBottles;
+              const multiRack = racks?.length > 1;
+
+              const WineRow = ({ wine, index }) => {
+                const status = getDrinkabilityStatus(wine);
+                const special = isSpecialBottle(wine);
+                const positions = getRackPositions(wine, wines, racks);
+                const matchReasons = getMatchReasons(wine);
+                return (
+                  <div className={`flex items-center gap-5 py-4 border-b border-gray-50 ${special ? 'bg-blue-50/20' : ''}`}>
+                    <div className="w-8 shrink-0 text-right">
+                      <span className="text-xl font-black tabular-nums" style={{ color: '#e8e8e8' }}>{index}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <span className="font-black text-gray-900 text-sm">{wine.producer}</span>
+                        <span className="text-gray-300 text-xs">/</span>
+                        <span className="text-gray-700 text-sm font-semibold">{wine.name}</span>
+                        {wine.vintage && <span className="text-gray-400 text-sm">{wine.vintage}</span>}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span className="text-xs text-gray-400">{wine.varietal}</span>
+                        {wine.state && (
+                          <>
+                            <span className="text-gray-200">·</span>
+                            <span className="text-xs text-gray-400">{wine.state}, {wine.country}</span>
+                          </>
+                        )}
+                        {matchReasons.length > 0 && (
+                          <>
+                            <span className="text-gray-200">·</span>
+                            <span className="text-xs text-gray-300">good with {matchReasons.slice(0, 2).map(r => r.toLowerCase()).join(', ')}</span>
+                          </>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2 flex-wrap">
-                          <span className="font-black text-gray-900 text-sm">{wine.producer}</span>
-                          <span className="text-gray-300 text-xs">/</span>
-                          <span className="text-gray-700 text-sm font-semibold">{wine.name}</span>
-                          {wine.vintage && (
-                            <span className="text-gray-400 text-sm">{wine.vintage}</span>
-                          )}
+                      {positions.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {positions.map(({ label, rackName }, j) => (
+                            <span key={j} title={rackName} className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-bold rounded font-mono border border-amber-100">
+                              {multiRack ? `${rackName} ${label}` : label}
+                            </span>
+                          ))}
                         </div>
-                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                          <span className="text-xs text-gray-400">{wine.varietal}</span>
-                          {wine.state && (
-                            <>
-                              <span className="text-gray-200">·</span>
-                              <span className="text-xs text-gray-400">{wine.state}, {wine.country}</span>
-                            </>
-                          )}
-                          {matchReasons.length > 0 && (
-                            <>
-                              <span className="text-gray-200">·</span>
-                              <span className="text-xs text-gray-300">
-                                good with {matchReasons.slice(0, 2).map(r => r.toLowerCase()).join(', ')}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                        {positions.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            {positions.map(({ label, rackName }, j) => (
-                              <span
-                                key={j}
-                                title={rackName}
-                                className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-bold rounded font-mono border border-amber-100"
-                              >
-                                {multiRack ? `${rackName} ${label}` : label}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      {wine.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{wine.quantity}</span>}
+                      <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[status]}`}>{status}</span>
+                    </div>
+                  </div>
+                );
+              };
+
+              const topStatus = getDrinkabilityStatus(topPick);
+              const topPositions = getRackPositions(topPick, wines, racks);
+              const topMatchReasons = getMatchReasons(topPick);
+
+              return (
+                <div>
+                  {/* Top pick card */}
+                  <div className={`mb-6 p-5 rounded-xl border ${isSpecialBottle(topPick) ? 'border-blue-100 bg-blue-50/30' : 'border-gray-200 bg-gray-50'}`}>
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <span className="text-xs font-black uppercase tracking-widest text-amber-500 pt-0.5">Pick</span>
                       <div className="flex items-center gap-2.5 shrink-0">
-                        {wine.quantity > 1 && (
-                          <span className="text-xs text-gray-400 font-semibold tabular-nums">×{wine.quantity}</span>
-                        )}
-                        <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[status]}`}>
-                          {status}
-                        </span>
+                        {topPick.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{topPick.quantity}</span>}
+                        <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[topStatus]}`}>{topStatus}</span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                    <div className="flex items-baseline gap-2 flex-wrap mb-1">
+                      <span className="font-black text-gray-900">{topPick.producer}</span>
+                      <span className="text-gray-300 text-xs">/</span>
+                      <span className="text-gray-700 font-semibold">{topPick.name}</span>
+                      {topPick.vintage && <span className="text-gray-400">{topPick.vintage}</span>}
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs text-gray-400">{topPick.varietal}</span>
+                      {topPick.state && (
+                        <>
+                          <span className="text-gray-200">·</span>
+                          <span className="text-xs text-gray-400">{topPick.state}, {topPick.country}</span>
+                        </>
+                      )}
+                      {topMatchReasons.length > 0 && (
+                        <>
+                          <span className="text-gray-200">·</span>
+                          <span className="text-xs text-gray-400">good with {topMatchReasons.slice(0, 2).map(r => r.toLowerCase()).join(', ')}</span>
+                        </>
+                      )}
+                    </div>
+                    {topPositions.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-3">
+                        {topPositions.map(({ label, rackName }, j) => (
+                          <span key={j} title={rackName} className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-bold rounded font-mono border border-amber-100">
+                            {multiRack ? `${rackName} ${label}` : label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Rest of list */}
+                  {rest.length > 0 && (
+                    <div>
+                      {rest.map((wine, i) => (
+                        <WineRow key={getWineKey(wine)} wine={wine} index={i + 2} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </>
       )}
