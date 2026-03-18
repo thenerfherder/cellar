@@ -21,6 +21,7 @@ import AddWineModal from './components/AddWineModal';
 import SettingsModal from './components/SettingsModal';
 import SommelierView from './components/SommelierView';
 import CellarAdvisorView from './components/CellarAdvisorView';
+import PriceDistribution from './components/PriceDistribution';
 
 const WineCellar = () => {
   const { user, signOut } = useAuth();
@@ -426,6 +427,11 @@ const WineCellar = () => {
 
           {/* Right column: bar charts */}
           <div className="flex flex-col gap-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">Price Distribution</h2>
+              <PriceDistribution wines={wineData} />
+            </div>
+
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Vintage</h2>
               <ResponsiveContainer width="100%" height={200}>
