@@ -77,8 +77,8 @@ export default function WorldMap({ data, onClick }) {
   return (
     <div className="relative">
       <ComposableMap
-        projectionConfig={{ scale: 140, center: [15, 10] }}
-        style={{ width: '100%', height: '220px' }}
+        projectionConfig={{ scale: 180, center: [15, 10] }}
+        style={{ width: '100%', height: '340px' }}
       >
         <Geographies geography={GEO_URL}>
           {({ geographies }) =>
