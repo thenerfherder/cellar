@@ -21,6 +21,7 @@ import AddWineModal from './components/AddWineModal';
 import SettingsModal from './components/SettingsModal';
 import SommelierView from './components/SommelierView';
 import CellarAdvisorView from './components/CellarAdvisorView';
+import WorldMap from './components/WorldMap';
 
 const WineCellar = () => {
   const { user, signOut } = useAuth();
@@ -239,19 +240,6 @@ const WineCellar = () => {
       .map(([name, value]) => ({ name, value }));
   }, [wineData]);
 
-  const drinkabilityData = useMemo(() => {
-    const data = {
-      [DRINKABILITY_STATUS.FINAL_YEAR]: 0,
-      [DRINKABILITY_STATUS.READY_NOW]: 0,
-      [DRINKABILITY_STATUS.AGE_1_5]: 0,
-      [DRINKABILITY_STATUS.AGE_5_PLUS]: 0
-    };
-    wineData.forEach(wine => {
-      const status = getDrinkabilityStatus(wine);
-      if (status) data[status] += wine.quantity;
-    });
-    return Object.entries(data).map(([name, value]) => ({ name, value }));
-  }, [wineData]);
 
   if (winesLoading) {
     return (
@@ -433,12 +421,7 @@ const WineCellar = () => {
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Country</h2>
-              <SegmentedBarWithLegend data={regionData} onClick={setSelectedCountry} />
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">Drinkability</h2>
-              <SegmentedBarWithLegend data={drinkabilityData} onClick={setSelectedDrinkability} />
+              <WorldMap data={regionData} onClick={setSelectedCountry} />
             </div>
           </div>
 
