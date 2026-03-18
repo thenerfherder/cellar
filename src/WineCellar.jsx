@@ -101,6 +101,7 @@ const WineCellar = () => {
   const [selectedWine, setSelectedWine] = useState(null);
 
   const [activeView, setActiveView] = useState('dashboard');
+  const [detailsTab, setDetailsTab] = useState('collection');
   const [showAddWine, setShowAddWine] = useState(false);
   const [showEditWine, setShowEditWine] = useState(null);
   const [addWinePrefill, setAddWinePrefill] = useState(null);
@@ -487,10 +488,34 @@ const WineCellar = () => {
           </div>
         </div>
 
-        {/* Complete Collection Table */}
+        {/* Details: Collection + Gaps tabs */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          {/* Tab header */}
+          <div className="flex gap-0 mb-4 border-b border-gray-200">
+            <button
+              onClick={() => setDetailsTab('collection')}
+              className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 transition-colors ${
+                detailsTab === 'collection'
+                  ? 'border-gray-900 text-gray-900'
+                  : 'border-transparent text-gray-400 hover:text-gray-700'
+              }`}
+            >
+              Collection
+            </button>
+            <button
+              onClick={() => setDetailsTab('gaps')}
+              className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 transition-colors ${
+                detailsTab === 'gaps'
+                  ? 'border-gray-900 text-gray-900'
+                  : 'border-transparent text-gray-400 hover:text-gray-700'
+              }`}
+            >
+              Gaps
+            </button>
+          </div>
+
+          {detailsTab === 'collection' && <div>
           <div className="mb-4">
-            <h2 className="text-sm font-black text-gray-900 uppercase tracking-tight mb-3">Complete Collection</h2>
 
             <div className="flex flex-wrap gap-2 mb-2">
               <button
@@ -684,6 +709,9 @@ const WineCellar = () => {
               </div>
             )}
           </div>
+          </div>}
+
+          {detailsTab === 'gaps' && <CellarAdvisorView wines={wineData} />}
         </div>
 
         {/* Detail modals — country, varietal, drinkability, vintage */}
@@ -761,8 +789,6 @@ const WineCellar = () => {
             onWineClick={setSelectedWine}
           />
         </DetailModal>
-
-        <CellarAdvisorView wines={wineData} />
 
         </>}
       </div>
