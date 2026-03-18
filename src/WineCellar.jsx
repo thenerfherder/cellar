@@ -298,7 +298,7 @@ const WineCellar = () => {
                     : 'bg-white text-gray-500 hover:bg-gray-50'
                 }`}
               >
-                Dashboard
+                Analyze
               </button>
               <button
                 onClick={() => setActiveView('rack')}
@@ -308,7 +308,7 @@ const WineCellar = () => {
                     : 'bg-white text-gray-500 hover:bg-gray-50'
                 }`}
               >
-                Rack View
+                Manage
               </button>
               <button
                 onClick={() => setActiveView('sommelier')}
@@ -318,17 +318,7 @@ const WineCellar = () => {
                     : 'bg-white text-gray-500 hover:bg-gray-50'
                 }`}
               >
-                Sommelier
-              </button>
-              <button
-                onClick={() => setActiveView('advisor')}
-                className={`px-5 py-2 text-sm font-bold uppercase tracking-wider transition-colors ${
-                  activeView === 'advisor'
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-white text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                Buy List
+                Pair
               </button>
             </div>
             <div className="flex items-center gap-2">
@@ -359,8 +349,6 @@ const WineCellar = () => {
         {/* Sommelier View */}
         {activeView === 'sommelier' && <SommelierView wines={wineData} racks={racks} />}
 
-        {/* Buy List / Cellar Advisor */}
-        {activeView === 'advisor' && <CellarAdvisorView wines={wineData} />}
 
         {/* Rack View */}
         {activeView === 'rack' && (
@@ -844,6 +832,8 @@ const WineCellar = () => {
             onWineClick={setSelectedWine}
           />
         </DetailModal>
+
+        <CellarAdvisorView wines={wineData} />
 
         </>}
       </div>
