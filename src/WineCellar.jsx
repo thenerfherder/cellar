@@ -97,7 +97,7 @@ const WineCellar = () => {
   const [selectedDrinkability, setSelectedDrinkability] = useState(null);
   const [selectedVintage, setSelectedVintage] = useState(null);
   const [selectedWine, setSelectedWine] = useState(null);
-  const [showPeakView, setShowPeakView] = useState(false);
+
   const [activeView, setActiveView] = useState('dashboard');
   const [showAddWine, setShowAddWine] = useState(false);
   const [showEditWine, setShowEditWine] = useState(null);
@@ -433,50 +433,67 @@ const WineCellar = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Varietal</h2>
-            <SegmentedBarWithLegend data={varietalData} onClick={setSelectedVarietal} />
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Country</h2>
-            <SegmentedBarWithLegend data={regionData} onClick={setSelectedCountry} />
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">Drinkability</h2>
-            <SegmentedBarWithLegend data={drinkabilityData} onClick={setSelectedDrinkability} />
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-sm font-black text-gray-900 uppercase tracking-tight">
-                {showPeakView ? 'By Peak Year' : 'By Vintage'}
-              </h2>
-              <button
-                onClick={() => setShowPeakView(!showPeakView)}
-                className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs uppercase tracking-wider rounded-lg transition-colors"
-              >
-                {showPeakView ? 'Show Vintage' : 'Show Peak'}
-              </button>
+          {/* Left column: segmented bars */}
+          <div className="flex flex-col gap-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Varietal</h2>
+              <SegmentedBarWithLegend data={varietalData} onClick={setSelectedVarietal} />
             </div>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={showPeakView ? peakData : vintageData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" onClick={(data) => setSelectedVintage(data.name)} className="cursor-pointer">
-                  {(showPeakView ? peakData : vintageData).map((_entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={getColorByIndex(index)}
-                      className="hover:opacity-80 transition-opacity"
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Country</h2>
+              <SegmentedBarWithLegend data={regionData} onClick={setSelectedCountry} />
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">Drinkability</h2>
+              <SegmentedBarWithLegend data={drinkabilityData} onClick={setSelectedDrinkability} />
+            </div>
+          </div>
+
+          {/* Right column: bar charts */}
+          <div className="flex flex-col gap-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Vintage</h2>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={vintageData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" onClick={(data) => setSelectedVintage(data.name)} className="cursor-pointer">
+                    {vintageData.map((_entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={getColorByIndex(index)}
+                        className="hover:opacity-80 transition-opacity"
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Peak Year</h2>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={peakData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" onClick={(data) => setSelectedVintage(data.name)} className="cursor-pointer">
+                    {peakData.map((_entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={getColorByIndex(index)}
+                        className="hover:opacity-80 transition-opacity"
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
