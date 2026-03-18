@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Always reserve scrollbar space so the header never shifts between tabs */
+html {
+  overflow-y: scroll;
+}
+
 /* Prevent iOS Safari from zooming on input focus */
 @media screen and (max-width: 767px) {
   input, select, textarea {
