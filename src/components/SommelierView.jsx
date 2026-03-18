@@ -140,18 +140,26 @@ export default function SommelierView({ wines, racks }) {
   const [selectedDish, setSelectedDish] = useState(null);
   const [occasion, setOccasion] = useState('casual');
 
-  const recommendedVarietals = useMemo(() => {
-    if (!selectedDish) return [];
-    return Object.entries(WINE_PAIRINGS)
-      .filter(([, pairings]) =>
-        pairings.some(food =>
-          selectedDish.keywords.some(kw =>
-            food.toLowerCase().includes(kw.toLowerCase())
-          )
-        )
-      )
-      .map(([varietal]) => varietal);
+  const varietalScores = useMemo(() => {
+    if (!selectedDish) return {};
+    const scores = {};
+    Object.entries(WINE_PAIRINGS).forEach(([varietal, pairings]) => {
+      const matchCount = pairings.filter(food =>
+        selectedDish.keywords.some(kw => food.toLowerCase().includes(kw.toLowerCase()))
+      ).length;
+      if (matchCount > 0) scores[varietal] = matchCount;
+    });
+    return scores;
   }, [selectedDish]);
+
+  const recommendedVarietals = useMemo(() => Object.keys(varietalScores), [varietalScores]);
+
+  const getMatchReasons = (wine) => {
+    if (!selectedDish) return [];
+    return (WINE_PAIRINGS[wine.varietal] ?? []).filter(food =>
+      selectedDish.keywords.some(kw => food.toLowerCase().includes(kw.toLowerCase()))
+    );
+  };
 
   const recommendedBottles = useMemo(() => {
     if (!recommendedVarietals.length) return [];
@@ -160,11 +168,13 @@ export default function SommelierView({ wines, racks }) {
       .sort((a, b) => {
         const orderDiff = DRINKABILITY_ORDER[getDrinkabilityStatus(a)] - DRINKABILITY_ORDER[getDrinkabilityStatus(b)];
         if (orderDiff !== 0) return orderDiff;
+        const scoreDiff = (varietalScores[b.varietal] ?? 0) - (varietalScores[a.varietal] ?? 0);
+        if (scoreDiff !== 0) return scoreDiff;
         return occasion === 'fancy'
           ? b.estimatedPrice - a.estimatedPrice
           : a.estimatedPrice - b.estimatedPrice;
       });
-  }, [wines, recommendedVarietals, occasion]);
+  }, [wines, recommendedVarietals, varietalScores, occasion]);
 
   return (
     <div>
@@ -259,13 +269,19 @@ export default function SommelierView({ wines, racks }) {
                   const special = isSpecialBottle(wine);
                   const positions = getRackPositions(wine, wines, racks);
                   const multiRack = racks?.length > 1;
+                  const matchReasons = getMatchReasons(wine);
+                  const isTopPick = i === 0;
                   return (
                     <div
                       key={getWineKey(wine)}
                       className={`flex items-center gap-5 py-4 border-b border-gray-50 ${special ? 'bg-blue-50/20' : ''}`}
                     >
                       <div className="w-8 shrink-0 text-right">
-                        <span className="text-xl font-black tabular-nums" style={{ color: '#e8e8e8' }}>{i + 1}</span>
+                        {isTopPick ? (
+                          <span className="text-xs font-black uppercase tracking-wider text-amber-400">Pick</span>
+                        ) : (
+                          <span className="text-xl font-black tabular-nums" style={{ color: '#e8e8e8' }}>{i + 1}</span>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 flex-wrap">
@@ -282,6 +298,14 @@ export default function SommelierView({ wines, racks }) {
                             <>
                               <span className="text-gray-200">·</span>
                               <span className="text-xs text-gray-400">{wine.state}, {wine.country}</span>
+                            </>
+                          )}
+                          {matchReasons.length > 0 && (
+                            <>
+                              <span className="text-gray-200">·</span>
+                              <span className="text-xs text-gray-300">
+                                good with {matchReasons.slice(0, 2).map(r => r.toLowerCase()).join(', ')}
+                              </span>
                             </>
                           )}
                         </div>
