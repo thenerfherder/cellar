@@ -111,7 +111,7 @@ Array of rack objects (not synced to Firestore):
 
 - **Auth**: `src/AuthContext.jsx` wraps the app in a Firebase auth provider. `src/LoginPage.jsx` handles the Google sign-in UI. Unauthenticated users see only the login page.
 - **Firestore**: Wine data loaded via `onSnapshot` on `users/{uid}`, written back with `setDoc(..., { merge: true })`. Real-time and per-user.
-- **Static data**: `src/data.js` contains `WINE_PAIRINGS`, `TASTING_NOTES`, and `getPairingsForWine`. UI-only lookups, not stored in Firestore.
+- **Static data**: `src/data.js` contains `WINE_PAIRINGS`, `TASTING_NOTES`, and `getPairingsForWine`. UI-only lookups, not stored in Firestore. See **Pairing & Tasting Notes Logic** below for details.
 - Firebase config lives in `src/firebase.js`, sourced from `.env` (`VITE_FIREBASE_*` — see `.env.example`).
 - Deploy with `npm run build`; GitHub Actions publishes to Pages on push to `master`.
 - AI feature API key: `VITE_ANTHROPIC_API_KEY` in `.env`.
@@ -138,6 +138,7 @@ src/
 │   ├── SegmentedBar.jsx  # exports SegmentedBar, Legend, SegmentedBarWithLegend
 │   ├── StarRating.jsx
 │   ├── StatCard.jsx
+│   ├── SommelierView.jsx # sommelier / food pairing view
 │   ├── WineCard.jsx
 │   └── WineList.jsx
 └── hooks/
@@ -165,6 +166,48 @@ Constants live in `src/constants.js`; utility functions in `src/utils.js`. Impor
 - **`aggregateData(items, keyExtractor, threshold)`** — groups by key, collapses small groups into "Other"
 - **`sortWines(wines)`** — canonical sort: producer → name → vintage desc
 - **`getPeakYear(wine)`** — midpoint of drink window
+
+## Pairing & Tasting Notes Logic
+
+All three pairing-related features share a single source of truth: `WINE_PAIRINGS` in `src/data.js`, keyed by varietal string. `TASTING_NOTES` uses the same keys. Every varietal listed in `VARIETALS` (`src/constants.js`) has a corresponding entry in both maps.
+
+### Tasting Notes (wine detail modal)
+- **Source**: `TASTING_NOTES[wine.varietal] || DEFAULT_TASTING_NOTES`
+- Static per-varietal descriptions. Falls back to a generic note for unknown varietals.
+
+### Perfect Pairings (wine detail modal)
+- **Source**: `getPairingsForWine(wine)` → `WINE_PAIRINGS[wine.varietal] ?? DEFAULT_PAIRINGS`
+- Returns 5 food strings for the varietal. Falls back to 5 generic pairings for unknown varietals.
+- Always use `getPairingsForWine(wine)` — never access `WINE_PAIRINGS[wine.varietal]` directly in components.
+
+### Dashboard Food Pairing Search
+- **Source**: same `getPairingsForWine(wine)` call, in `useWineFiltering.js`
+- Free-text substring match against the pairing strings (e.g. searching "lamb" surfaces all wines whose pairings include "lamb").
+
+### Sommelier View (`src/components/SommelierView.jsx`)
+Works the **reverse direction**: given a dish category, finds matching wines.
+
+1. **Score each varietal** (`varietalScores`): count how many of its `WINE_PAIRINGS` entries contain a keyword from the selected dish category. A varietal scoring 3 matches ranks above one scoring 1.
+2. **Filter cellar** to wines whose varietal has score > 0.
+3. **Sort** by three tiers:
+   - Drinkability status: Final Year → Ready Now → Age 1-5 → Age 5+
+   - Match score descending (better pairing fit first, within same drinkability)
+   - Price: ascending for Casual, descending for Fancy
+4. **Top result** is labelled "Pick". Each wine shows `· good with X, Y` (the matched food strings) inline.
+
+**Dish categories and their keywords** (case-insensitive substring match against pairing strings):
+
+| Category | Keywords |
+|---|---|
+| Red Meat | steak, beef, lamb, brisket, venison, ribs, short ribs, wild game, game, chorizo, chops |
+| Poultry | chicken, duck, turkey |
+| Fish | salmon, fish, trout |
+| Seafood | oyster, caviar, sushi, shrimp, seafood, lobster, ceviche |
+| Pasta & Pizza | pasta, pizza, risotto, bolognese, osso buco |
+| Cheese | cheese, charcuterie |
+| Vegetables | vegetable, ratatouille, salad, mediterranean, herb, roasted vegetables, mushroom |
+
+**Important**: when adding or editing pairing strings in `WINE_PAIRINGS`, ensure each entry contains at least one word from the keyword list above, so the wine will appear in the Sommelier. Dessert/fortified wines (Port, Sauternes, Late Harvest Riesling) intentionally only match Cheese — that is correct culinary behaviour.
 
 ## Known Tech Debt
 
