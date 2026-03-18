@@ -77,12 +77,12 @@ export default function WorldMap({ data, onClick }) {
   return (
     <div className="relative">
       <ComposableMap
-        projectionConfig={{ scale: 180, center: [15, 10] }}
+        projectionConfig={{ scale: 210, center: [10, 15] }}
         style={{ width: '100%', height: '340px' }}
       >
         <Geographies geography={GEO_URL}>
           {({ geographies }) =>
-            geographies.map((geo) => {
+            geographies.filter(geo => String(geo.id) !== '10').map((geo) => {
               const countryName = ISO_TO_NAME[String(geo.id)];
               const count = countsByCountry[countryName];
               const hasWines = !!count;
