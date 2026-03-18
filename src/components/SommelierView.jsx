@@ -203,8 +203,10 @@ export default function SommelierView({ wines, racks }) {
     );
   };
 
-  const compositeScore = (wine) =>
-    (varietalScores[wine.varietal] ?? 0) + DRINKABILITY_BONUS[getDrinkabilityStatus(wine)];
+  const compositeScore = (wine) => {
+    const base = (varietalScores[wine.varietal] ?? 0) + DRINKABILITY_BONUS[getDrinkabilityStatus(wine)];
+    return occasion === 'celebration' && isSpecialBottle(wine) ? base + 2 : base;
+  };
 
   const recommendedBottles = useMemo(() => {
     if (!recommendedVarietals.length) return [];
@@ -213,9 +215,9 @@ export default function SommelierView({ wines, racks }) {
       .sort((a, b) => {
         const scoreDiff = compositeScore(b) - compositeScore(a);
         if (scoreDiff !== 0) return scoreDiff;
-        return occasion === 'fancy'
-          ? b.estimatedPrice - a.estimatedPrice
-          : a.estimatedPrice - b.estimatedPrice;
+        return occasion === 'casual'
+          ? a.estimatedPrice - b.estimatedPrice
+          : b.estimatedPrice - a.estimatedPrice;
       });
   }, [wines, recommendedVarietals, varietalScores, occasion]);
 
@@ -244,9 +246,19 @@ export default function SommelierView({ wines, racks }) {
           >
             Fancy
           </button>
+          <button
+            onClick={() => setOccasion('celebration')}
+            className={`px-5 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+              occasion === 'celebration'
+                ? 'bg-gray-900 text-white'
+                : 'bg-white text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            Celebration
+          </button>
         </div>
         <p className="text-xs text-gray-300 uppercase tracking-widest">
-          {occasion === 'casual' ? 'Prioritising everyday bottles' : 'Prioritising special bottles'}
+          {occasion === 'casual' ? 'Prioritising everyday bottles' : occasion === 'fancy' ? 'Prioritising special bottles' : 'Prioritising your finest bottles'}
         </p>
       </div>
       <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3 mb-4">
