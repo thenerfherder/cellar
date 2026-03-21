@@ -289,7 +289,8 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
     const base = pairingScore + regionBonus + peakBonus + tanninAdjust + prepBonus + ratingBonus;
     // Occasion bonus: nudges ranking without hiding wines.
     // Casual surfaces everyday bottles; Fancy/Celebration surface special bottles.
-    const occasionBonus = occasion === 'casual' && !isSpecialBottle(wine) ? 1
+    const occasionBonus = occasion === 'casual'
+      ? (isSpecialBottle(wine) ? -1 : 1)
       : occasion === 'fancy' && isSpecialBottle(wine) ? 1
       : occasion === 'celebration' && isSpecialBottle(wine) ? 2
       : 0;
