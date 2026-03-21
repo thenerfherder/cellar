@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { WINE_PAIRINGS, VARIETAL_PAIRING_SCORES, getPairingsForWine } from '../data';
+import { WINE_PAIRINGS, VARIETAL_PAIRING_SCORES, REGION_SCORE_MODIFIERS, ROBUST_PAIRING_KEYS, DELICATE_PAIRING_KEYS, getPairingsForWine } from '../data';
 import { getDrinkabilityStatus, getWineKey, isSpecialBottle } from '../utils';
-import { DRINKABILITY_STATUS } from '../constants';
+import { DRINKABILITY_STATUS, CONFIG } from '../constants';
 
 const RedMeatIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -148,12 +148,23 @@ const DISH_CATEGORIES = [
   },
 ];
 
-const DRINKABILITY_BONUS = {
-  [DRINKABILITY_STATUS.FINAL_YEAR]: 4,
-  [DRINKABILITY_STATUS.READY_NOW]: 3,
-  [DRINKABILITY_STATUS.AGE_1_5]: 1,
-  [DRINKABILITY_STATUS.AGE_5_PLUS]: 0,
-};
+// Continuous peak proximity bonus (0–4) based on where the wine sits in its arc.
+// Replaces the old 4-tier step-function so wines near their peak rank above
+// wines at the edge of their window, and past-peak wines decay gracefully
+// instead of returning null and disappearing from results.
+function getPeakProximityBonus(wine) {
+  if (!wine.drinkWindow) return 0;
+  const [start, end] = wine.drinkWindow.split('-').map(Number);
+  const { CURRENT_YEAR } = CONFIG;
+  if (CURRENT_YEAR > end) return Math.max(0, 2 - (CURRENT_YEAR - end)); // past peak, fades over 2 years
+  if (CURRENT_YEAR === end) return 4;                                    // final year: urgency
+  if (CURRENT_YEAR < start) return start - CURRENT_YEAR <= 3 ? 1 : 0;  // approaching window
+  // In window: score by proximity to midpoint (peak)
+  const peak = (start + end) / 2;
+  const halfWindow = (end - start) / 2;
+  const proximity = 1 - Math.abs(CURRENT_YEAR - peak) / halfWindow;     // 1 at peak, 0 at edge
+  return Math.round(1 + proximity * 3);                                  // range 1–4
+}
 
 const STATUS_STYLES = {
   [DRINKABILITY_STATUS.FINAL_YEAR]: 'bg-red-50 text-red-600 border border-red-100',
@@ -203,7 +214,17 @@ export default function SommelierView({ wines, racks }) {
   };
 
   const compositeScore = (wine) => {
-    const base = (varietalScores[wine.varietal] ?? 0) + DRINKABILITY_BONUS[getDrinkabilityStatus(wine)];
+    const pairingScore = varietalScores[wine.varietal] ?? 0;
+    const regionBonus = REGION_SCORE_MODIFIERS[wine.country]?.[wine.varietal]?.[activeKey] ?? 0;
+    const peakBonus = getPeakProximityBonus(wine);
+    // Young wine tannin adjustment: not-yet-ready wines pair better with robust
+    // (fatty/rich) dishes and worse with delicate ones.
+    const status = getDrinkabilityStatus(wine);
+    const notReady = status === DRINKABILITY_STATUS.AGE_1_5 || status === DRINKABILITY_STATUS.AGE_5_PLUS;
+    const tanninAdjust = notReady && activeKey
+      ? (ROBUST_PAIRING_KEYS.has(activeKey) ? 1 : DELICATE_PAIRING_KEYS.has(activeKey) ? -1 : 0)
+      : 0;
+    const base = pairingScore + regionBonus + peakBonus + tanninAdjust;
     return occasion === 'celebration' && isSpecialBottle(wine) ? base + 2 : base;
   };
 
@@ -230,7 +251,7 @@ export default function SommelierView({ wines, racks }) {
       return special.length > 0 ? special : sorted;
     }
     return sorted;
-  }, [wines, recommendedVarietals, varietalScores, occasion]);
+  }, [wines, recommendedVarietals, varietalScores, occasion, activeKey]);
 
   return (
     <div>

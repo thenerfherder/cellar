@@ -128,6 +128,73 @@ export const getPairingsForWine = (wine) => WINE_PAIRINGS[wine.varietal] ?? DEFA
 //   pasta-sub, pizza, risotto, cheese-sub, charcuterie,
 //   salad, mushrooms, roasted, mediterranean
 // Scores 1–5: 1=acceptable, 3=good, 5=classic/iconic
+// Per-country (and where meaningful, per-varietal) pairing score adjustments.
+// Applied on top of VARIETAL_PAIRING_SCORES to reward classic regional pairings.
+// Values are additive bonuses using the same key space as VARIETAL_PAIRING_SCORES.
+export const REGION_SCORE_MODIFIERS = {
+  'France': {
+    'Pinot Noir':       { 'duck': 1, 'mushrooms': 1 },
+    'Champagne Blend':  { 'oysters': 1, 'caviar': 1, 'sushi': 1 },
+    'Syrah':            { 'lamb': 1, 'game': 1 },
+    'Grenache Blend':   { 'mediterranean': 1, 'lamb': 1 },
+    'Rhône Blend':      { 'lamb': 1, 'mediterranean': 1 },
+    'Roussanne':        { 'lobster': 1, 'risotto': 1 },
+    'Marsanne':         { 'white-fish': 1, 'lobster': 1 },
+    'Mourvèdre':        { 'game': 1, 'lamb': 1 },
+  },
+  'Italy': {
+    'Nebbiolo':         { 'pasta-sub': 1, 'risotto': 1 },
+    'Sangiovese':       { 'pizza': 1, 'pasta-sub': 1 },
+    'Barbera':          { 'pizza': 1, 'pasta-sub': 1 },
+  },
+  'Spain': {
+    'Tempranillo':      { 'chorizo': 1, 'lamb': 1 },
+    'Grenache':         { 'mediterranean': 1, 'lamb': 1 },
+    'Albariño':         { 'shrimp': 1, 'white-fish': 1 },
+  },
+  'Germany': {
+    'Riesling':         { 'trout': 1, 'duck': 1 },
+  },
+  'Austria': {
+    'Grüner Veltliner': { 'white-fish': 1, 'salad': 1 },
+    'Riesling':         { 'trout': 1, 'white-fish': 1 },
+  },
+  'Argentina': {
+    'Malbec':           { 'steak': 1, 'ribs': 1 },
+    'Cabernet Franc':   { 'lamb': 1, 'steak': 1 },
+  },
+  'Australia': {
+    'Syrah':            { 'ribs': 1, 'steak': 1, 'game': 1 },
+    'Grenache Blend':   { 'roasted': 1, 'mediterranean': 1 },
+  },
+  'New Zealand': {
+    'Sauvignon Blanc':  { 'oysters': 1, 'white-fish': 1 },
+    'Pinot Noir':       { 'salmon': 1, 'duck': 1 },
+  },
+  'Chile': {
+    'Carmenère':        { 'steak': 1, 'ribs': 1 },
+    'Cabernet Sauvignon': { 'steak': 1 },
+  },
+  'Portugal': {
+    'Red Blend':        { 'ribs': 1, 'steak': 1 },
+  },
+};
+
+// Which pairing keys are considered "robust" (fatty/rich) vs "delicate".
+// Used to adjust scores for wines not yet in their drink window —
+// young tannic wines benefit from fat and are less suited to delicate dishes.
+export const ROBUST_PAIRING_KEYS = new Set([
+  'red-meat', 'steak', 'ribs', 'lamb', 'game', 'chorizo',
+  'cheese', 'cheese-sub', 'charcuterie',
+  'pasta', 'pasta-sub', 'pizza', 'risotto',
+  'poultry', 'duck', 'turkey',
+]);
+export const DELICATE_PAIRING_KEYS = new Set([
+  'fish', 'salmon', 'trout', 'white-fish',
+  'seafood', 'oysters', 'shrimp', 'sushi', 'caviar', 'lobster',
+  'vegetables', 'salad', 'mediterranean',
+]);
+
 export const VARIETAL_PAIRING_SCORES = {
   // --- Reds ---
   'Barbera': {
