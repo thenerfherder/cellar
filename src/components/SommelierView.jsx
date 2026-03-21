@@ -446,10 +446,14 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
                 {Object.entries(varietalScores)
                   .sort((a, b) => b[1] - a[1])
                   .slice(0, 5)
-                  .map(([v]) => (
+                  .map(([v, score]) => (
                     <span
                       key={v}
-                      className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider bg-gray-50 text-gray-600 rounded-full border border-gray-100"
+                      className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full border ${
+                        score === 5
+                          ? 'bg-blue-50 text-blue-600 border-blue-200'
+                          : 'bg-gray-50 text-gray-600 border-gray-100'
+                      }`}
                     >
                       {v}
                     </span>
@@ -478,10 +482,11 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
               const WineRow = ({ wine, index }) => {
                 const status = getDrinkabilityStatus(wine);
                 const special = isSpecialBottle(wine);
+                const isPerfectPairing = (varietalScores[wine.varietal] ?? 0) === 5;
                 const positions = getRackPositions(wine, wines, racks);
                 const matchReasons = getMatchReasons(wine);
                 return (
-                  <div className={`flex items-center gap-5 py-4 border-b border-gray-50 ${special ? 'bg-blue-50/20' : ''}`}>
+                  <div className={`flex items-center gap-5 py-4 border-b border-gray-50 ${isPerfectPairing ? 'bg-blue-50/40' : special ? 'bg-blue-50/20' : ''}`}>
                     <div className="w-8 shrink-0 text-right">
                       <span className="text-xl font-black tabular-nums" style={{ color: '#e8e8e8' }}>{index}</span>
                     </div>
@@ -532,7 +537,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
               return (
                 <div>
                   {/* Top pick card */}
-                  <div className={`mb-6 p-5 rounded-xl border ${isSpecialBottle(topPick) ? 'border-blue-100 bg-blue-50/30' : 'border-gray-200 bg-gray-50'}`}>
+                  <div className={`mb-6 p-5 rounded-xl border ${(varietalScores[topPick.varietal] ?? 0) === 5 ? 'border-blue-200 bg-blue-50/50' : isSpecialBottle(topPick) ? 'border-blue-100 bg-blue-50/30' : 'border-gray-200 bg-gray-50'}`}>
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <span className="text-xs font-black uppercase tracking-widest text-amber-500 pt-0.5">Pick</span>
                       <div className="flex items-center gap-2.5 shrink-0">
