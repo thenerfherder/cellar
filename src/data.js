@@ -153,7 +153,7 @@ export const REGION_SCORE_MODIFIERS = {
     'Albariño':         { 'shrimp': 1, 'white-fish': 1 },
   },
   'Germany': {
-    'Riesling':         { 'trout': 1, 'duck': 1 },
+    'Riesling':         { 'trout': 1, 'duck': 1, 'pork': 1, 'pork-chops': 1 },
   },
   'Austria': {
     'Grüner Veltliner': { 'white-fish': 1, 'salad': 1 },
@@ -185,6 +185,7 @@ export const REGION_SCORE_MODIFIERS = {
 // young tannic wines benefit from fat and are less suited to delicate dishes.
 export const ROBUST_PAIRING_KEYS = new Set([
   'red-meat', 'steak', 'ribs', 'lamb', 'game', 'chorizo',
+  'pork', 'pork-belly',
   'cheese', 'cheese-sub', 'charcuterie',
   'pasta', 'pasta-sub', 'pizza', 'risotto',
   'poultry', 'duck', 'turkey',
@@ -195,10 +196,32 @@ export const DELICATE_PAIRING_KEYS = new Set([
   'vegetables', 'salad', 'mediterranean',
 ]);
 
+// Preparation-style modifiers applied on top of dish scores.
+// "Light" (grilled, raw, lightly dressed) favours crisp/high-acid wines.
+// "Rich" (cream, butter, braise, confit) favours full-bodied, textured wines.
+// Values are +1 / -1 bonuses keyed by varietal.
+export const PREPARATION_MODIFIERS = {
+  light: {
+    'Sauvignon Blanc': 1, 'Riesling': 1, 'Grüner Veltliner': 1,
+    'Chablis': 1, 'Albariño': 1, 'Crémant': 1, 'Champagne Blend': 1,
+    'Gamay': 1, 'Pinot Noir': 1, 'Rosé': 1, 'Prosecco': 1,
+    'Chardonnay': -1, 'Viognier': -1, 'Roussanne': -1, 'Marsanne': -1,
+    'Cabernet Sauvignon': -1, 'Syrah': -1, 'Malbec': -1,
+    'Petite Sirah': -1, 'Zinfandel': -1,
+  },
+  rich: {
+    'Chardonnay': 1, 'Viognier': 1, 'Roussanne': 1, 'Marsanne': 1, 'Pouilly-Fuissé': 1,
+    'Merlot': 1, 'Cabernet Franc': 1, 'Pinot Noir': 1, 'Nebbiolo': 1,
+    'Sauvignon Blanc': -1, 'Grüner Veltliner': -1, 'Albariño': -1,
+    'Chablis': -1, 'Gamay': -1, 'Rosé': -1,
+  },
+};
+
 export const VARIETAL_PAIRING_SCORES = {
   // --- Reds ---
   'Barbera': {
     'pasta': 5, 'pasta-sub': 4, 'pizza': 5, 'risotto': 2,
+    'pork': 3, 'pork-chops': 3,
     'poultry': 3, 'chicken': 3,
     'cheese': 3, 'cheese-sub': 2, 'charcuterie': 4,
     'vegetables': 3, 'mushrooms': 3,
@@ -231,6 +254,7 @@ export const VARIETAL_PAIRING_SCORES = {
   },
   'Gamay': {
     'poultry': 4, 'chicken': 4,
+    'pork': 4, 'pork-chops': 4, 'ham': 4,
     'fish': 3, 'salmon': 3,
     'cheese': 3, 'cheese-sub': 2, 'charcuterie': 4,
     'pasta': 2, 'pasta-sub': 2,
@@ -238,6 +262,7 @@ export const VARIETAL_PAIRING_SCORES = {
   },
   'Grenache': {
     'red-meat': 4, 'lamb': 5, 'steak': 2,
+    'pork': 3, 'pork-chops': 3,
     'poultry': 4, 'chicken': 4,
     'cheese': 3, 'cheese-sub': 2, 'charcuterie': 3,
     'vegetables': 4, 'roasted': 4, 'mediterranean': 4,
@@ -265,6 +290,7 @@ export const VARIETAL_PAIRING_SCORES = {
   },
   'Merlot': {
     'red-meat': 3, 'steak': 2,
+    'pork': 3, 'pork-chops': 3,
     'poultry': 4, 'chicken': 4,
     'pasta': 3, 'pasta-sub': 3, 'risotto': 3,
     'fish': 3, 'salmon': 3,
@@ -276,6 +302,7 @@ export const VARIETAL_PAIRING_SCORES = {
   },
   'Nebbiolo': {
     'red-meat': 4, 'lamb': 4, 'steak': 3, 'game': 2,
+    'pork': 3, 'ham': 3,
     'pasta': 5, 'pasta-sub': 5, 'risotto': 4,
     'cheese': 4, 'cheese-sub': 4,
   },
@@ -289,6 +316,7 @@ export const VARIETAL_PAIRING_SCORES = {
   },
   'Pinot Noir': {
     'poultry': 5, 'duck': 5, 'turkey': 4, 'chicken': 3,
+    'pork': 4, 'pork-chops': 4, 'pork-belly': 3,
     'fish': 4, 'salmon': 4,
     'vegetables': 4, 'mushrooms': 5, 'roasted': 3,
     'cheese': 3, 'cheese-sub': 3, 'charcuterie': 2,
@@ -309,6 +337,7 @@ export const VARIETAL_PAIRING_SCORES = {
   'Sangiovese': {
     'pasta': 5, 'pizza': 5, 'pasta-sub': 5, 'risotto': 3,
     'red-meat': 3, 'steak': 2,
+    'pork': 3, 'pork-chops': 3, 'ham': 3,
     'cheese': 3, 'cheese-sub': 3,
     'vegetables': 3, 'roasted': 3, 'mushrooms': 3,
   },
@@ -319,17 +348,20 @@ export const VARIETAL_PAIRING_SCORES = {
   },
   'Tempranillo': {
     'red-meat': 4, 'lamb': 4, 'chorizo': 5, 'steak': 3, 'ribs': 2,
+    'pork': 3, 'ham': 3,
     'pasta': 3,
     'cheese': 3, 'cheese-sub': 3,
   },
   'Côtes du Rhône Red': {
     'red-meat': 4, 'lamb': 4, 'steak': 3, 'ribs': 2,
+    'pork': 3,
     'poultry': 3, 'chicken': 3,
     'cheese': 3, 'cheese-sub': 2,
     'vegetables': 3, 'roasted': 4, 'mediterranean': 3,
   },
   'Zinfandel': {
     'red-meat': 4, 'ribs': 5, 'lamb': 3, 'chorizo': 3, 'steak': 3,
+    'pork': 3, 'pork-belly': 3,
     'pasta': 3, 'pizza': 3,
     'cheese': 2,
   },
@@ -347,12 +379,14 @@ export const VARIETAL_PAIRING_SCORES = {
   'Chardonnay': {
     'seafood': 4, 'lobster': 5,
     'poultry': 4, 'chicken': 5,
+    'pork': 3, 'pork-chops': 4,
     'fish': 4, 'white-fish': 4, 'salmon': 3,
     'pasta': 3, 'pasta-sub': 3, 'risotto': 3,
     'cheese': 3, 'cheese-sub': 3,
   },
   'Chenin Blanc': {
     'poultry': 4, 'chicken': 4,
+    'pork': 3, 'pork-chops': 3,
     'seafood': 3, 'lobster': 4,
     'cheese': 3, 'cheese-sub': 3,
     'pasta': 2,
@@ -360,6 +394,7 @@ export const VARIETAL_PAIRING_SCORES = {
   },
   'Gewürztraminer': {
     'poultry': 3, 'chicken': 3, 'duck': 4,
+    'pork': 4, 'pork-belly': 4, 'ham': 3,
     'cheese': 3, 'cheese-sub': 2, 'charcuterie': 3,
     'fish': 2, 'salmon': 3,
   },
@@ -378,6 +413,7 @@ export const VARIETAL_PAIRING_SCORES = {
     'cheese': 2, 'cheese-sub': 2,
   },
   'Muscat': {
+    'pork': 2, 'ham': 2,
     'cheese': 3, 'cheese-sub': 2, 'charcuterie': 3,
     'poultry': 2,
     'fish': 2, 'salmon': 2,
@@ -386,6 +422,7 @@ export const VARIETAL_PAIRING_SCORES = {
   'Pinot Gris': {
     'fish': 4, 'salmon': 4, 'white-fish': 3,
     'poultry': 3, 'chicken': 3,
+    'pork': 4, 'pork-chops': 4, 'ham': 3,
     'cheese': 3, 'cheese-sub': 3,
     'pasta': 3, 'pasta-sub': 3, 'risotto': 3,
     'vegetables': 3, 'mushrooms': 3,
@@ -400,6 +437,7 @@ export const VARIETAL_PAIRING_SCORES = {
   'Riesling': {
     'fish': 4, 'trout': 5, 'salmon': 3, 'white-fish': 3,
     'poultry': 3, 'duck': 4,
+    'pork': 5, 'pork-chops': 5, 'pork-belly': 4, 'ham': 3,
     'cheese': 3, 'cheese-sub': 3,
   },
   'Rosé': {
@@ -443,17 +481,20 @@ export const VARIETAL_PAIRING_SCORES = {
   'Champagne Blend': {
     'seafood': 5, 'oysters': 5, 'caviar': 5, 'shrimp': 3, 'sushi': 4,
     'fish': 3, 'salmon': 3,
+    'pork': 3, 'ham': 4,
     'cheese': 4, 'cheese-sub': 4, 'charcuterie': 3,
     'pasta': 2,
   },
   'Crémant': {
     'seafood': 4, 'oysters': 4, 'shrimp': 3,
     'fish': 3, 'salmon': 3,
+    'pork': 3, 'ham': 3,
     'cheese': 3, 'cheese-sub': 3, 'charcuterie': 3,
     'pasta': 2,
   },
   'Prosecco': {
     'seafood': 3, 'shrimp': 3,
+    'pork': 2, 'ham': 3,
     'cheese': 3, 'cheese-sub': 2, 'charcuterie': 3,
     'pasta': 3, 'pasta-sub': 3,
     'vegetables': 2,
@@ -461,6 +502,7 @@ export const VARIETAL_PAIRING_SCORES = {
   'Sparkling Wine': {
     'seafood': 4, 'oysters': 4, 'shrimp': 3,
     'fish': 2,
+    'pork': 2, 'ham': 2,
     'cheese': 3, 'cheese-sub': 3, 'charcuterie': 3,
   },
 

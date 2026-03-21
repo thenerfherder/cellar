@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { WINE_PAIRINGS, VARIETAL_PAIRING_SCORES, REGION_SCORE_MODIFIERS, ROBUST_PAIRING_KEYS, DELICATE_PAIRING_KEYS, getPairingsForWine } from '../data';
+import { WINE_PAIRINGS, VARIETAL_PAIRING_SCORES, REGION_SCORE_MODIFIERS, ROBUST_PAIRING_KEYS, DELICATE_PAIRING_KEYS, PREPARATION_MODIFIERS, getPairingsForWine } from '../data';
 import { getDrinkabilityStatus, getWineKey, isSpecialBottle } from '../utils';
 import { DRINKABILITY_STATUS, CONFIG } from '../constants';
 
@@ -64,6 +64,17 @@ const VegetablesIcon = ({ className }) => (
   </svg>
 );
 
+const PorkIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 14.5C5 11 8.5 8.5 13 8.5C17 8.5 20 11 20 14C20 17 17 19 13 19C9 19 5 17 5 14.5Z"/>
+    <path d="M20.5 11C22 9.5 22 7.5 20.5 7C19.5 8 20 10 20.5 11Z"/>
+    <path d="M9.5 8.5C9 7 9.5 5.5 11 5.5C11.5 7 11 8.5 9.5 8.5Z"/>
+    <ellipse cx="17" cy="13.5" rx="1.5" ry="1"/>
+    <circle cx="16.4" cy="13.5" r="0.35" fill="currentColor" stroke="none"/>
+    <circle cx="17.6" cy="13.5" r="0.35" fill="currentColor" stroke="none"/>
+  </svg>
+);
+
 const DISH_CATEGORIES = [
   {
     id: 'red-meat',
@@ -87,6 +98,17 @@ const DISH_CATEGORIES = [
       { id: 'chicken', label: 'Chicken', keywords: ['chicken'] },
       { id: 'duck', label: 'Duck', keywords: ['duck'] },
       { id: 'turkey', label: 'Turkey', keywords: ['turkey'] },
+    ],
+  },
+  {
+    id: 'pork',
+    label: 'Pork',
+    keywords: ['pork', 'tenderloin', 'prosciutto', 'ham', 'pancetta', 'belly'],
+    Icon: PorkIcon,
+    subCategories: [
+      { id: 'pork-chops', label: 'Chops', keywords: ['pork', 'tenderloin', 'pork chop'] },
+      { id: 'pork-belly', label: 'Belly', keywords: ['belly', 'pork belly'] },
+      { id: 'ham', label: 'Ham & Cured', keywords: ['ham', 'prosciutto', 'pancetta', 'cured'] },
     ],
   },
   {
@@ -190,6 +212,7 @@ export default function SommelierView({ wines, racks }) {
   const [selectedDish, setSelectedDish] = useState(null);
   const [selectedSub, setSelectedSub] = useState(null);
   const [occasion, setOccasion] = useState('casual');
+  const [preparation, setPreparation] = useState(null); // null | 'light' | 'rich'
 
   const activeKeywords = selectedSub ? selectedSub.keywords : selectedDish?.keywords ?? [];
   const activeKey = selectedSub ? (selectedSub.scoreKey ?? selectedSub.id) : selectedDish?.id;
@@ -224,7 +247,8 @@ export default function SommelierView({ wines, racks }) {
     const tanninAdjust = notReady && activeKey
       ? (ROBUST_PAIRING_KEYS.has(activeKey) ? 1 : DELICATE_PAIRING_KEYS.has(activeKey) ? -1 : 0)
       : 0;
-    const base = pairingScore + regionBonus + peakBonus + tanninAdjust;
+    const prepBonus = preparation ? (PREPARATION_MODIFIERS[preparation]?.[wine.varietal] ?? 0) : 0;
+    const base = pairingScore + regionBonus + peakBonus + tanninAdjust + prepBonus;
     return occasion === 'celebration' && isSpecialBottle(wine) ? base + 2 : base;
   };
 
@@ -251,7 +275,7 @@ export default function SommelierView({ wines, racks }) {
       return special.length > 0 ? special : sorted;
     }
     return sorted;
-  }, [wines, recommendedVarietals, varietalScores, occasion, activeKey]);
+  }, [wines, recommendedVarietals, varietalScores, occasion, activeKey, preparation]);
 
   return (
     <div>
@@ -293,7 +317,7 @@ export default function SommelierView({ wines, racks }) {
           {occasion === 'casual' ? 'Prioritising everyday bottles' : occasion === 'fancy' ? 'Prioritising special bottles' : 'Prioritising your finest bottles'}
         </p>
       </div>
-      <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3 mb-4">
+      <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 sm:gap-3 mb-4">
         {DISH_CATEGORIES.map(dish => {
           const isSelected = selectedDish?.id === dish.id;
           return (
@@ -303,9 +327,11 @@ export default function SommelierView({ wines, racks }) {
                 if (isSelected) {
                   setSelectedDish(null);
                   setSelectedSub(null);
+                  setPreparation(null);
                 } else {
                   setSelectedDish(dish);
                   setSelectedSub(null);
+                  setPreparation(null);
                 }
               }}
               className={`flex flex-col items-center gap-2.5 py-5 px-2 rounded-xl border transition-all ${
@@ -321,25 +347,45 @@ export default function SommelierView({ wines, racks }) {
         })}
       </div>
 
-      {/* Sub-category filter */}
+      {/* Sub-category filter + preparation toggle */}
       {selectedDish && (
-        <div className="flex flex-wrap gap-2 mb-8">
-          {selectedDish.subCategories.map(sub => {
-            const isActive = selectedSub?.id === sub.id;
-            return (
-              <button
-                key={sub.id}
-                onClick={() => setSelectedSub(isActive ? null : sub)}
-                className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full border transition-all ${
-                  isActive
-                    ? 'bg-gray-900 text-white border-gray-900'
-                    : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600'
-                }`}
-              >
-                {sub.label}
-              </button>
-            );
-          })}
+        <div className="flex items-start justify-between gap-4 mb-8">
+          <div className="flex flex-wrap gap-2">
+            {selectedDish.subCategories.map(sub => {
+              const isActive = selectedSub?.id === sub.id;
+              return (
+                <button
+                  key={sub.id}
+                  onClick={() => setSelectedSub(isActive ? null : sub)}
+                  className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full border transition-all ${
+                    isActive
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600'
+                  }`}
+                >
+                  {sub.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+            {['Light', 'Rich'].map(p => {
+              const key = p.toLowerCase();
+              return (
+                <button
+                  key={key}
+                  onClick={() => setPreparation(preparation === key ? null : key)}
+                  className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full border transition-all ${
+                    preparation === key
+                      ? 'bg-gray-900 text-white border-gray-900'
+                      : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600'
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
