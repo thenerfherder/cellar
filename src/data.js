@@ -323,8 +323,9 @@ export const VARIETAL_PAIRING_SCORES = {
     'pasta': 3, 'risotto': 3,
   },
   'Red Blend': {
-    'red-meat': 4, 'steak': 3, 'ribs': 3,
-    'cheese': 3, 'cheese-sub': 2, 'charcuterie': 2,
+    'red-meat': 5, 'steak': 4, 'ribs': 4,
+    'pork': 3,
+    'cheese': 3, 'cheese-sub': 2, 'charcuterie': 3,
     'vegetables': 3, 'roasted': 3,
     'pasta': 2,
   },
