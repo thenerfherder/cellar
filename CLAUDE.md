@@ -187,48 +187,54 @@ All three pairing-related features share a single source of truth: `WINE_PAIRING
 ### Sommelier View (`src/components/SommelierView.jsx`)
 Works the **reverse direction**: given a dish category (and optional sub-category), finds matching wines.
 
-1. **Score each varietal** (`varietalScores`): count how many of its `WINE_PAIRINGS` entries contain a keyword from the **active keywords** (sub-category keywords if one is selected, otherwise the full category keywords). A varietal scoring 3 matches ranks above one scoring 1.
-2. **Filter cellar** to wines whose varietal has score > 0.
-3. **Sort** by three tiers:
-   - Drinkability status: Final Year → Ready Now → Age 1-5 → Age 5+
-   - Match score descending (better pairing fit first, within same drinkability)
-   - Price: ascending for Casual, descending for Fancy
-4. **Top result** is labelled "Pick". Each wine shows `· good with X, Y` (the matched food strings) inline.
-5. **Target Varietals** shows up to 5 varietals, sorted by match score descending.
+1. **Score each varietal** (`varietalScores`): primary source is `VARIETAL_PAIRING_SCORES` in `data.js`, keyed by dish/sub-category id (scores 1–5). For varietals not in the score table, falls back to text-matching against `WINE_PAIRINGS` keywords (capped at 2).
+2. **Composite score** per bottle: `(pairingScore × 2) + regionBonus + peakProximityBonus + tanninAdjust + prepBonus + ratingBonus + occasionBonus`
+   - `regionBonus`: per-country varietal bonuses from `REGION_SCORE_MODIFIERS`
+   - `peakProximityBonus`: continuous 0–4 bonus based on position within drink window
+   - `tanninAdjust`: not-ready wines score +1 on robust dishes, −1 on delicate dishes
+   - `prepBonus`: light/rich preparation style modifier from `PREPARATION_MODIFIERS`
+   - `ratingBonus`: +1 if personally rated ≥4, −1 if rated ≤2
+   - `occasionBonus`: casual surfaces everyday bottles; fancy/celebration surfaces special bottles
+3. **Filter cellar** to wines whose varietal has score > 0, then sort by composite score descending.
+4. **Top result** is labelled "Pick". Each wine shows `· good with X, Y` (matched sub-category labels) inline.
+5. **Target Varietals** shows up to 5 varietals sorted by pairing score descending.
 
-**Three-level filtering**: Casual/Fancy → primary dish category → optional sub-category. Selecting a sub-category narrows `activeKeywords`; deselecting returns to the full category keywords.
+**Three-level filtering**: Casual/Fancy/Celebration → primary dish category → optional sub-category. Selecting a sub-category narrows `activeKeywords` and `activeKey`; deselecting returns to the full category.
 
-**Dish categories, sub-categories, and their keywords** (case-insensitive substring match against pairing strings):
+**Dish categories, sub-categories, and their keywords** (keywords used for text-match fallback; `scoreKey` overrides the id for score table lookup where noted):
 
-| Category | Sub-category | Keywords |
-|---|---|---|
-| Red Meat | Steak | steak, beef |
-| Red Meat | Lamb | lamb, chops |
-| Red Meat | Ribs & Brisket | ribs, short ribs, brisket |
-| Red Meat | Game | venison, wild game, game |
-| Red Meat | Chorizo | chorizo |
-| Poultry | Chicken | chicken |
-| Poultry | Duck | duck |
-| Poultry | Turkey | turkey |
-| Fish | Salmon | salmon |
-| Fish | Trout | trout |
-| Fish | White Fish | fish |
-| Seafood | Oysters | oyster |
-| Seafood | Lobster | lobster, seafood |
-| Seafood | Shrimp | shrimp |
-| Seafood | Sushi | sushi, ceviche |
-| Seafood | Caviar | caviar |
-| Pasta & Pizza | Pasta | pasta, bolognese, osso buco |
-| Pasta & Pizza | Pizza | pizza |
-| Pasta & Pizza | Risotto | risotto |
-| Cheese | Cheese | cheese |
-| Cheese | Charcuterie | charcuterie |
-| Vegetables | Salad | salad |
-| Vegetables | Mushrooms | mushroom |
-| Vegetables | Roasted Veg | roasted vegetables, vegetable, ratatouille |
-| Vegetables | Mediterranean | mediterranean, herb |
+| Category | Sub-category | Keywords | scoreKey |
+|---|---|---|---|
+| Red Meat | Steak | steak, beef | |
+| Red Meat | Lamb | lamb, chops | |
+| Red Meat | Ribs & Brisket | ribs, short ribs, brisket | |
+| Red Meat | Game | venison, wild game, game | |
+| Red Meat | Chorizo | chorizo | |
+| Poultry | Chicken | chicken | |
+| Poultry | Duck | duck | |
+| Poultry | Turkey | turkey | |
+| Pork | Chops | pork, tenderloin, pork chop | pork-chops |
+| Pork | Belly | belly, pork belly | pork-belly |
+| Pork | Ham & Cured | ham, prosciutto, pancetta, cured | ham |
+| Fish | Salmon | salmon | |
+| Fish | Trout | trout | |
+| Fish | White Fish | fish | white-fish |
+| Seafood | Oysters | oyster | |
+| Seafood | Lobster | lobster, seafood | |
+| Seafood | Shrimp | shrimp | |
+| Seafood | Sushi | sushi, ceviche | |
+| Seafood | Caviar | caviar | |
+| Pasta & Pizza | Pasta | pasta, bolognese, osso buco | pasta-sub |
+| Pasta & Pizza | Pizza | pizza | |
+| Pasta & Pizza | Risotto | risotto | |
+| Cheese | Cheese | cheese | cheese-sub |
+| Cheese | Charcuterie | charcuterie | |
+| Vegetables | Salad | salad | |
+| Vegetables | Mushrooms | mushroom | |
+| Vegetables | Roasted Veg | roasted vegetables, vegetable, ratatouille | roasted |
+| Vegetables | Mediterranean | mediterranean, herb | |
 
-**Important**: when adding or editing pairing strings in `WINE_PAIRINGS`, ensure each entry contains at least one word from the keyword list above, so the wine will appear in the Sommelier. Dessert/fortified wines (Port, Sauternes, Late Harvest Riesling) intentionally only match Cheese — that is correct culinary behaviour.
+**Important**: when adding or editing pairing strings in `WINE_PAIRINGS`, ensure each entry contains at least one word from the keyword list above, so the wine will appear in the Sommelier text-match fallback. Primary scoring uses `VARIETAL_PAIRING_SCORES` — always update that table when adding new varietals. Dessert/fortified wines (Port, Sauternes, Late Harvest Riesling) intentionally only match Cheese — that is correct culinary behaviour.
 
 ## Known Tech Debt
 
@@ -246,3 +252,4 @@ Ordered by priority:
 6. **Replace magic strings with named constants** — `'dashboard'`, `'rack'`, `'Other'`, `'NV'` appear 9+ times across files; should live in `constants.js`.
 7. **Consolidate `DetailModal` boilerplate** in `WineCellar.jsx:635–836` — 5 near-identical invocations with `isOpen={!!selectedX}` / `onClose={() => setSelectedX(null)}`; consider a factory helper.
 8. **Extract rowspan lookahead logic** from `WineCellar.jsx:514–535` into a utility function for readability.
+9. **Enforce pairing score key strings** — all keys used in `VARIETAL_PAIRING_SCORES`, `REGION_SCORE_MODIFIERS`, `ROBUST/DELICATE_PAIRING_KEYS`, and `PREPARATION_MODIFIERS` in `data.js` are raw strings (e.g. `'caviar'`, `'sushi'`, `'red-meat'`). They must exactly match the `id`/`scoreKey` values in `DISH_CATEGORIES` in `SommelierView.jsx`, but there is no enforcement — typos silently score 0. Fix: extract all score keys into a `PAIRING_KEYS` constant object in `constants.js` and import it in both files.
