@@ -210,15 +210,27 @@ export default function SommelierView({ wines, racks }) {
 
   const recommendedBottles = useMemo(() => {
     if (!recommendedVarietals.length) return [];
-    return wines
-      .filter(w => recommendedVarietals.includes(w.varietal))
-      .sort((a, b) => {
-        const scoreDiff = compositeScore(b) - compositeScore(a);
-        if (scoreDiff !== 0) return scoreDiff;
-        return occasion === 'casual'
-          ? a.estimatedPrice - b.estimatedPrice
-          : b.estimatedPrice - a.estimatedPrice;
-      });
+    const matching = wines.filter(w => recommendedVarietals.includes(w.varietal));
+
+    const sorted = [...matching].sort((a, b) => {
+      const scoreDiff = compositeScore(b) - compositeScore(a);
+      if (scoreDiff !== 0) return scoreDiff;
+      return occasion === 'casual'
+        ? a.estimatedPrice - b.estimatedPrice
+        : b.estimatedPrice - a.estimatedPrice;
+    });
+
+    if (occasion === 'casual') {
+      // Exclude special bottles from casual recommendations
+      const everyday = sorted.filter(w => !isSpecialBottle(w));
+      return everyday.length > 0 ? everyday : sorted;
+    }
+    if (occasion === 'celebration') {
+      // Prefer special bottles; fall back to full list if none match
+      const special = sorted.filter(w => isSpecialBottle(w));
+      return special.length > 0 ? special : sorted;
+    }
+    return sorted;
   }, [wines, recommendedVarietals, varietalScores, occasion]);
 
   return (

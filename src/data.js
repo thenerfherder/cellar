@@ -48,10 +48,10 @@ export const WINE_PAIRINGS = {
   'White Blend': ['Grilled fish', 'Roasted chicken', 'Soft cheeses', 'Seafood pasta', 'Salads'],
 
   // Sparkling
-  'Champagne Blend': ['Oysters', 'Caviar', 'Fried chicken', 'Soft cheeses', 'Sushi'],
+  'Champagne Blend': ['Oysters', 'Caviar', 'Crispy fried appetizers', 'Soft cheeses', 'Sushi'],
   'Crémant': ['Oysters', 'Smoked salmon', 'Soft cheeses', 'Fried oysters', 'Charcuterie'],
-  'Prosecco': ['Charcuterie', 'Grilled shrimp', 'Soft cheeses', 'Fried chicken', 'Light pasta'],
-  'Sparkling Wine': ['Oysters', 'Grilled shrimp', 'Charcuterie', 'Fried chicken', 'Soft cheeses'],
+  'Prosecco': ['Charcuterie', 'Grilled shrimp', 'Soft cheeses', 'Crispy fried appetizers', 'Light pasta'],
+  'Sparkling Wine': ['Oysters', 'Grilled shrimp', 'Charcuterie', 'Crispy fried appetizers', 'Soft cheeses'],
 
   // Dessert & Fortified
   'Late Harvest Riesling': ['Foie gras', 'Fruit desserts', 'Blue cheese', 'Fruit tart', 'Soft cheeses'],
