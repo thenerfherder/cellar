@@ -323,7 +323,7 @@ const WineCellar = () => {
         </div>
 
         {/* Sommelier View */}
-        {activeView === 'sommelier' && <SommelierView wines={wineData} racks={racks} />}
+        {activeView === 'sommelier' && <SommelierView wines={wineData} racks={racks} getRatingInfo={getRatingInfo} />}
 
 
         {/* Rack View */}

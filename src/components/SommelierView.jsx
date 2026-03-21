@@ -208,7 +208,7 @@ function getRackPositions(wine, wines, racks) {
   ).sort((a, b) => a.rackName.localeCompare(b.rackName) || a.label.localeCompare(b.label));
 }
 
-export default function SommelierView({ wines, racks }) {
+export default function SommelierView({ wines, racks, getRatingInfo }) {
   const [selectedDish, setSelectedDish] = useState(null);
   const [selectedSub, setSelectedSub] = useState(null);
   const [occasion, setOccasion] = useState('casual');
@@ -220,24 +220,50 @@ export default function SommelierView({ wines, racks }) {
   const varietalScores = useMemo(() => {
     if (!selectedDish || !activeKey) return {};
     const scores = {};
+    // Primary: explicit score table
     Object.entries(VARIETAL_PAIRING_SCORES).forEach(([varietal, categoryScores]) => {
       const score = categoryScores[activeKey] ?? 0;
       if (score > 0) scores[varietal] = score;
     });
+    // Fallback: text-match for custom varietals not covered by the score table.
+    // Capped at 2 (acceptable) so they never outrank curated entries.
+    wines.forEach(wine => {
+      if (wine.varietal in VARIETAL_PAIRING_SCORES) return;
+      if (wine.varietal in scores) return;
+      const pairings = WINE_PAIRINGS[wine.varietal];
+      if (!pairings) return;
+      const matchCount = pairings.filter(food =>
+        activeKeywords.some(kw => food.toLowerCase().includes(kw.toLowerCase()))
+      ).length;
+      if (matchCount > 0) scores[wine.varietal] = Math.min(2, matchCount);
+    });
     return scores;
-  }, [selectedDish, activeKey]);
+  }, [selectedDish, activeKey, wines, activeKeywords]);
 
   const recommendedVarietals = useMemo(() => Object.keys(varietalScores), [varietalScores]);
 
   const getMatchReasons = (wine) => {
     if (!selectedDish) return [];
+    const scoreData = VARIETAL_PAIRING_SCORES[wine.varietal];
+    if (scoreData) {
+      // Derive reasons from which sub-categories of the active dish score well (≥3)
+      const subMatches = selectedDish.subCategories
+        .filter(sub => (scoreData[sub.scoreKey ?? sub.id] ?? 0) >= 3)
+        .map(sub => sub.label.toLowerCase());
+      if (subMatches.length > 0) return subMatches;
+      // Fall back to category label if category-level score is good but no sub hit threshold
+      return (scoreData[selectedDish.id] ?? 0) >= 3 ? [selectedDish.label.toLowerCase()] : [];
+    }
+    // Unknown varietal: fall back to legacy text match
     return getPairingsForWine(wine).filter(food =>
       activeKeywords.some(kw => food.toLowerCase().includes(kw.toLowerCase()))
     );
   };
 
   const compositeScore = (wine) => {
-    const pairingScore = varietalScores[wine.varietal] ?? 0;
+    // Pairing fit is weighted 2× so it dominates over readiness bonuses.
+    // A poor pairing match should never outrank a great one just because it's at peak.
+    const pairingScore = (varietalScores[wine.varietal] ?? 0) * 2;
     const regionBonus = REGION_SCORE_MODIFIERS[wine.country]?.[wine.varietal]?.[activeKey] ?? 0;
     const peakBonus = getPeakProximityBonus(wine);
     // Young wine tannin adjustment: not-yet-ready wines pair better with robust
@@ -248,7 +274,10 @@ export default function SommelierView({ wines, racks }) {
       ? (ROBUST_PAIRING_KEYS.has(activeKey) ? 1 : DELICATE_PAIRING_KEYS.has(activeKey) ? -1 : 0)
       : 0;
     const prepBonus = preparation ? (PREPARATION_MODIFIERS[preparation]?.[wine.varietal] ?? 0) : 0;
-    const base = pairingScore + regionBonus + peakBonus + tanninAdjust + prepBonus;
+    // Personal rating bonus: wines you've rated highly surface above equally-scored unknowns.
+    const { myRating } = getRatingInfo ? getRatingInfo(getWineKey(wine)) : { myRating: null };
+    const ratingBonus = myRating >= 4 ? 1 : myRating !== null && myRating <= 2 ? -1 : 0;
+    const base = pairingScore + regionBonus + peakBonus + tanninAdjust + prepBonus + ratingBonus;
     return occasion === 'celebration' && isSpecialBottle(wine) ? base + 2 : base;
   };
 
@@ -275,7 +304,7 @@ export default function SommelierView({ wines, racks }) {
       return special.length > 0 ? special : sorted;
     }
     return sorted;
-  }, [wines, recommendedVarietals, varietalScores, occasion, activeKey, preparation]);
+  }, [wines, recommendedVarietals, varietalScores, occasion, activeKey, preparation, getRatingInfo]);
 
   return (
     <div>
