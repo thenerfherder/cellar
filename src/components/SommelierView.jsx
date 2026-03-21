@@ -214,7 +214,10 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
   const [occasion, setOccasion] = useState('casual');
   const [preparation, setPreparation] = useState(null); // null | 'light' | 'rich'
 
-  const activeKeywords = selectedSub ? selectedSub.keywords : selectedDish?.keywords ?? [];
+  const activeKeywords = useMemo(
+    () => selectedSub ? selectedSub.keywords : selectedDish?.keywords ?? [],
+    [selectedSub, selectedDish]
+  );
   const activeKey = selectedSub ? (selectedSub.scoreKey ?? selectedSub.id) : selectedDish?.id;
 
   const varietalScores = useMemo(() => {
@@ -246,12 +249,18 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
     if (!selectedDish) return [];
     const scoreData = VARIETAL_PAIRING_SCORES[wine.varietal];
     if (scoreData) {
-      // Derive reasons from which sub-categories of the active dish score well (≥3)
+      // When a sub-category is selected, surface it specifically — don't let
+      // other high-scoring subs push it off the label (e.g. Caviar selected
+      // shouldn't show "good with oysters, shrimp").
+      if (selectedSub) {
+        const key = selectedSub.scoreKey ?? selectedSub.id;
+        return (scoreData[key] ?? 0) >= 3 ? [selectedSub.label.toLowerCase()] : [];
+      }
+      // No sub selected: show all sub-categories that score well for this dish.
       const subMatches = selectedDish.subCategories
         .filter(sub => (scoreData[sub.scoreKey ?? sub.id] ?? 0) >= 3)
         .map(sub => sub.label.toLowerCase());
       if (subMatches.length > 0) return subMatches;
-      // Fall back to category label if category-level score is good but no sub hit threshold
       return (scoreData[selectedDish.id] ?? 0) >= 3 ? [selectedDish.label.toLowerCase()] : [];
     }
     // Unknown varietal: fall back to legacy text match
@@ -510,7 +519,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
                     </div>
                     <div className="flex items-center gap-2.5 shrink-0">
                       {wine.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{wine.quantity}</span>}
-                      <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[status]}`}>{status}</span>
+                      {status && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[status]}`}>{status}</span>}
                     </div>
                   </div>
                 );
@@ -528,7 +537,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
                       <span className="text-xs font-black uppercase tracking-widest text-amber-500 pt-0.5">Pick</span>
                       <div className="flex items-center gap-2.5 shrink-0">
                         {topPick.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{topPick.quantity}</span>}
-                        <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[topStatus]}`}>{topStatus}</span>
+                        {topStatus && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[topStatus]}`}>{topStatus}</span>}
                       </div>
                     </div>
                     <div className="flex items-baseline gap-2 flex-wrap mb-1">
