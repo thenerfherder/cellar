@@ -278,7 +278,13 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
     const { myRating } = getRatingInfo ? getRatingInfo(getWineKey(wine)) : { myRating: null };
     const ratingBonus = myRating >= 4 ? 1 : myRating !== null && myRating <= 2 ? -1 : 0;
     const base = pairingScore + regionBonus + peakBonus + tanninAdjust + prepBonus + ratingBonus;
-    return occasion === 'celebration' && isSpecialBottle(wine) ? base + 2 : base;
+    // Occasion bonus: nudges ranking without hiding wines.
+    // Casual surfaces everyday bottles; Fancy/Celebration surface special bottles.
+    const occasionBonus = occasion === 'casual' && !isSpecialBottle(wine) ? 1
+      : occasion === 'fancy' && isSpecialBottle(wine) ? 1
+      : occasion === 'celebration' && isSpecialBottle(wine) ? 2
+      : 0;
+    return base + occasionBonus;
   };
 
   const recommendedBottles = useMemo(() => {
@@ -293,13 +299,12 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
         : b.estimatedPrice - a.estimatedPrice;
     });
 
-    if (occasion === 'casual') {
-      // Exclude special bottles from casual recommendations
-      const everyday = sorted.filter(w => !isSpecialBottle(w));
-      return everyday.length > 0 ? everyday : sorted;
-    }
+    // Celebration hard-filters to special bottles only (with fallback if none present).
+    // Casual and Fancy show all matching wines — occasion preference is expressed via
+    // compositeScore's occasionBonus, so cheaper/expensive bottles bubble up without
+    // hiding anything (fixes the "all-special-bottle" caveat where casual fell back to
+    // showing Dom Perignon only).
     if (occasion === 'celebration') {
-      // Prefer special bottles; fall back to full list if none match
       const special = sorted.filter(w => isSpecialBottle(w));
       return special.length > 0 ? special : sorted;
     }
