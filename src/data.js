@@ -120,3 +120,296 @@ export const TASTING_NOTES = {
 };
 
 export const getPairingsForWine = (wine) => WINE_PAIRINGS[wine.varietal] ?? DEFAULT_PAIRINGS;
+
+// Direct pairing scores per varietal, keyed by dish category id and sub-category id.
+// Category keys: red-meat, poultry, fish, seafood, pasta, cheese, vegetables
+// Sub-category keys: steak, lamb, ribs, game, chorizo, chicken, duck, turkey,
+//   salmon, trout, white-fish, oysters, lobster, shrimp, sushi, caviar,
+//   pasta-sub, pizza, risotto, cheese-sub, charcuterie,
+//   salad, mushrooms, roasted, mediterranean
+// Scores 1–5: 1=acceptable, 3=good, 5=classic/iconic
+export const VARIETAL_PAIRING_SCORES = {
+  // --- Reds ---
+  'Barbera': {
+    'pasta': 5, 'pasta-sub': 4, 'pizza': 5, 'risotto': 2,
+    'poultry': 3, 'chicken': 3,
+    'cheese': 3, 'cheese-sub': 2, 'charcuterie': 4,
+    'vegetables': 3, 'mushrooms': 3,
+  },
+  'Bordeaux Blend': {
+    'red-meat': 5, 'steak': 5, 'lamb': 5, 'ribs': 3,
+    'poultry': 2, 'duck': 3,
+    'cheese': 3, 'cheese-sub': 3,
+  },
+  'Cabernet Franc': {
+    'red-meat': 4, 'lamb': 5, 'steak': 2,
+    'poultry': 4, 'chicken': 4, 'duck': 4,
+    'pasta': 3, 'risotto': 4,
+    'cheese': 3, 'cheese-sub': 3,
+    'vegetables': 3, 'mushrooms': 4,
+  },
+  'Cabernet Sauvignon': {
+    'red-meat': 5, 'steak': 5, 'ribs': 4, 'lamb': 4, 'game': 3,
+    'cheese': 2, 'cheese-sub': 2,
+  },
+  'Cabernet Sauvignon Blend': {
+    'red-meat': 5, 'steak': 4, 'ribs': 4, 'lamb': 3,
+    'cheese': 2, 'cheese-sub': 2,
+    'vegetables': 2, 'roasted': 2,
+  },
+  'Carmenère': {
+    'red-meat': 5, 'steak': 4, 'lamb': 4, 'ribs': 3,
+    'cheese': 2, 'cheese-sub': 2,
+    'vegetables': 2, 'roasted': 2,
+  },
+  'Gamay': {
+    'poultry': 4, 'chicken': 4,
+    'fish': 3, 'salmon': 3,
+    'cheese': 3, 'cheese-sub': 2, 'charcuterie': 4,
+    'pasta': 2, 'pasta-sub': 2,
+    'vegetables': 2, 'mushrooms': 3,
+  },
+  'Grenache': {
+    'red-meat': 4, 'lamb': 5, 'steak': 2,
+    'poultry': 4, 'chicken': 4,
+    'cheese': 3, 'cheese-sub': 2, 'charcuterie': 3,
+    'vegetables': 4, 'roasted': 4, 'mediterranean': 4,
+  },
+  'Grenache Blend': {
+    'red-meat': 4, 'lamb': 5,
+    'poultry': 4, 'chicken': 4,
+    'pasta': 3, 'risotto': 3,
+    'cheese': 2, 'cheese-sub': 2,
+    'vegetables': 4, 'roasted': 4, 'mediterranean': 5,
+  },
+  'GSM Blend': {
+    'red-meat': 5, 'lamb': 5, 'ribs': 4, 'steak': 3, 'game': 3,
+    'poultry': 3, 'chicken': 3,
+    'cheese': 3, 'cheese-sub': 2,
+  },
+  'Malbec': {
+    'red-meat': 5, 'steak': 5, 'ribs': 4, 'lamb': 3,
+    'cheese': 2, 'cheese-sub': 2,
+  },
+  'Meritage': {
+    'red-meat': 5, 'steak': 5, 'lamb': 4, 'ribs': 3,
+    'poultry': 2, 'duck': 3,
+    'cheese': 3, 'cheese-sub': 3,
+  },
+  'Merlot': {
+    'red-meat': 3, 'steak': 2,
+    'poultry': 4, 'chicken': 4,
+    'pasta': 3, 'pasta-sub': 3, 'risotto': 3,
+    'fish': 3, 'salmon': 3,
+    'cheese': 2, 'cheese-sub': 2,
+  },
+  'Mourvèdre': {
+    'red-meat': 5, 'lamb': 5, 'game': 4, 'ribs': 4, 'steak': 3,
+    'cheese': 3, 'cheese-sub': 3,
+  },
+  'Nebbiolo': {
+    'red-meat': 4, 'lamb': 4, 'steak': 3, 'game': 2,
+    'pasta': 5, 'pasta-sub': 5, 'risotto': 4,
+    'cheese': 4, 'cheese-sub': 4,
+  },
+  'Petit Verdot': {
+    'red-meat': 5, 'steak': 5, 'game': 4, 'ribs': 4, 'lamb': 3,
+    'cheese': 3, 'cheese-sub': 3,
+  },
+  'Petite Sirah': {
+    'red-meat': 5, 'ribs': 5, 'steak': 4, 'game': 3, 'lamb': 3,
+    'cheese': 2, 'cheese-sub': 2,
+  },
+  'Pinot Noir': {
+    'poultry': 5, 'duck': 5, 'turkey': 4, 'chicken': 3,
+    'fish': 4, 'salmon': 4,
+    'vegetables': 4, 'mushrooms': 5, 'roasted': 3,
+    'cheese': 3, 'cheese-sub': 3, 'charcuterie': 2,
+    'pasta': 3, 'risotto': 3,
+  },
+  'Red Blend': {
+    'red-meat': 4, 'steak': 3, 'ribs': 3,
+    'cheese': 3, 'cheese-sub': 2, 'charcuterie': 2,
+    'vegetables': 3, 'roasted': 3,
+    'pasta': 2,
+  },
+  'Rhône Blend': {
+    'red-meat': 4, 'lamb': 5, 'steak': 3,
+    'poultry': 3, 'chicken': 3,
+    'cheese': 3, 'cheese-sub': 3,
+    'vegetables': 4, 'roasted': 4, 'mediterranean': 4,
+  },
+  'Sangiovese': {
+    'pasta': 5, 'pizza': 5, 'pasta-sub': 5, 'risotto': 3,
+    'red-meat': 3, 'steak': 2,
+    'cheese': 3, 'cheese-sub': 3,
+    'vegetables': 3, 'roasted': 3, 'mushrooms': 3,
+  },
+  'Syrah': {
+    'red-meat': 5, 'lamb': 5, 'game': 5, 'ribs': 4, 'steak': 4,
+    'poultry': 2, 'duck': 2,
+    'cheese': 2, 'cheese-sub': 2,
+  },
+  'Tempranillo': {
+    'red-meat': 4, 'lamb': 4, 'chorizo': 5, 'steak': 3, 'ribs': 2,
+    'pasta': 3,
+    'cheese': 3, 'cheese-sub': 3,
+  },
+  'Côtes du Rhône Red': {
+    'red-meat': 4, 'lamb': 4, 'steak': 3, 'ribs': 2,
+    'poultry': 3, 'chicken': 3,
+    'cheese': 3, 'cheese-sub': 2,
+    'vegetables': 3, 'roasted': 4, 'mediterranean': 3,
+  },
+  'Zinfandel': {
+    'red-meat': 4, 'ribs': 5, 'lamb': 3, 'chorizo': 3, 'steak': 3,
+    'pasta': 3, 'pizza': 3,
+    'cheese': 2,
+  },
+
+  // --- Whites ---
+  'Albariño': {
+    'seafood': 5, 'oysters': 5, 'shrimp': 5, 'lobster': 3, 'sushi': 4,
+    'fish': 4, 'salmon': 3, 'white-fish': 5,
+  },
+  'Chablis': {
+    'seafood': 5, 'oysters': 5, 'shrimp': 4, 'sushi': 4,
+    'fish': 4, 'white-fish': 4,
+    'cheese': 3, 'cheese-sub': 3,
+  },
+  'Chardonnay': {
+    'seafood': 4, 'lobster': 5,
+    'poultry': 4, 'chicken': 5,
+    'fish': 4, 'white-fish': 4, 'salmon': 3,
+    'pasta': 3, 'pasta-sub': 3, 'risotto': 3,
+    'cheese': 3, 'cheese-sub': 3,
+  },
+  'Chenin Blanc': {
+    'poultry': 4, 'chicken': 4,
+    'seafood': 3, 'lobster': 4,
+    'cheese': 3, 'cheese-sub': 3,
+    'pasta': 2,
+    'vegetables': 3, 'roasted': 3,
+  },
+  'Gewürztraminer': {
+    'poultry': 3, 'chicken': 3, 'duck': 4,
+    'cheese': 3, 'cheese-sub': 2, 'charcuterie': 3,
+    'fish': 2, 'salmon': 3,
+  },
+  'Grüner Veltliner': {
+    'fish': 4, 'white-fish': 4, 'salmon': 2,
+    'poultry': 2,
+    'cheese': 2, 'cheese-sub': 2,
+    'pasta': 2,
+    'vegetables': 3, 'salad': 3,
+  },
+  'Marsanne': {
+    'fish': 4, 'white-fish': 4,
+    'seafood': 4, 'lobster': 4,
+    'pasta': 3, 'pasta-sub': 3, 'risotto': 3,
+    'poultry': 3, 'chicken': 3,
+    'cheese': 2, 'cheese-sub': 2,
+  },
+  'Muscat': {
+    'cheese': 3, 'cheese-sub': 2, 'charcuterie': 3,
+    'poultry': 2,
+    'fish': 2, 'salmon': 2,
+    'vegetables': 2, 'salad': 2,
+  },
+  'Pinot Gris': {
+    'fish': 4, 'salmon': 4, 'white-fish': 3,
+    'poultry': 3, 'chicken': 3,
+    'cheese': 3, 'cheese-sub': 3,
+    'pasta': 3, 'pasta-sub': 3, 'risotto': 3,
+    'vegetables': 3, 'mushrooms': 3,
+  },
+  'Pouilly-Fuissé': {
+    'seafood': 4, 'lobster': 5,
+    'fish': 4, 'white-fish': 4,
+    'poultry': 4, 'chicken': 4,
+    'pasta': 3, 'pasta-sub': 3,
+    'cheese': 3, 'cheese-sub': 3,
+  },
+  'Riesling': {
+    'fish': 4, 'trout': 5, 'salmon': 3, 'white-fish': 3,
+    'poultry': 3, 'duck': 4,
+    'cheese': 3, 'cheese-sub': 3,
+  },
+  'Rosé': {
+    'seafood': 4, 'shrimp': 4, 'lobster': 2,
+    'fish': 3, 'salmon': 3,
+    'poultry': 2, 'chicken': 2,
+    'pasta': 2, 'pizza': 2,
+    'cheese': 3, 'cheese-sub': 3,
+    'vegetables': 4, 'salad': 4, 'mediterranean': 5,
+  },
+  'Roussanne': {
+    'poultry': 4, 'chicken': 4,
+    'seafood': 3, 'lobster': 3,
+    'pasta': 3, 'risotto': 4,
+    'cheese': 3, 'cheese-sub': 3,
+    'vegetables': 3, 'mushrooms': 3,
+  },
+  'Sauvignon Blanc': {
+    'seafood': 4, 'oysters': 4, 'shrimp': 4,
+    'fish': 4, 'white-fish': 4, 'salmon': 3,
+    'cheese': 4, 'cheese-sub': 4,
+    'vegetables': 3, 'salad': 3,
+  },
+  'Viognier': {
+    'seafood': 3, 'lobster': 3,
+    'poultry': 4, 'chicken': 4,
+    'red-meat': 2, 'lamb': 3,
+    'fish': 3, 'white-fish': 3,
+    'cheese': 3, 'cheese-sub': 3,
+  },
+  'White Blend': {
+    'fish': 4, 'white-fish': 4, 'salmon': 3,
+    'poultry': 3, 'chicken': 3,
+    'seafood': 3, 'shrimp': 3,
+    'pasta': 3,
+    'cheese': 2, 'cheese-sub': 2,
+    'vegetables': 3, 'salad': 3,
+  },
+
+  // --- Sparkling ---
+  'Champagne Blend': {
+    'seafood': 5, 'oysters': 5, 'caviar': 5, 'shrimp': 3, 'sushi': 4,
+    'fish': 3, 'salmon': 3,
+    'cheese': 4, 'cheese-sub': 4, 'charcuterie': 3,
+    'pasta': 2,
+  },
+  'Crémant': {
+    'seafood': 4, 'oysters': 4, 'shrimp': 3,
+    'fish': 3, 'salmon': 3,
+    'cheese': 3, 'cheese-sub': 3, 'charcuterie': 3,
+    'pasta': 2,
+  },
+  'Prosecco': {
+    'seafood': 3, 'shrimp': 3,
+    'cheese': 3, 'cheese-sub': 2, 'charcuterie': 3,
+    'pasta': 3, 'pasta-sub': 3,
+    'vegetables': 2,
+  },
+  'Sparkling Wine': {
+    'seafood': 4, 'oysters': 4, 'shrimp': 3,
+    'fish': 2,
+    'cheese': 3, 'cheese-sub': 3, 'charcuterie': 3,
+  },
+
+  // --- Dessert & Fortified ---
+  'Late Harvest Riesling': {
+    'cheese': 5, 'cheese-sub': 4,
+  },
+  'Port': {
+    'cheese': 5, 'cheese-sub': 5,
+  },
+  'Sauternes': {
+    'cheese': 5, 'cheese-sub': 5,
+    'seafood': 2, 'lobster': 2,
+  },
+  'Sherry': {
+    'cheese': 4, 'cheese-sub': 4, 'charcuterie': 4,
+    'seafood': 3, 'oysters': 2,
+  },
+};

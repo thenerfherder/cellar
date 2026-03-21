@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { WINE_PAIRINGS, getPairingsForWine } from '../data';
+import { WINE_PAIRINGS, VARIETAL_PAIRING_SCORES, getPairingsForWine } from '../data';
 import { getDrinkabilityStatus, getWineKey, isSpecialBottle } from '../utils';
 import { DRINKABILITY_STATUS } from '../constants';
 
@@ -119,7 +119,7 @@ const DISH_CATEGORIES = [
     keywords: ['pasta', 'pizza', 'risotto', 'bolognese', 'osso buco'],
     Icon: PastaIcon,
     subCategories: [
-      { id: 'pasta', label: 'Pasta', keywords: ['pasta', 'bolognese', 'osso buco'] },
+      { id: 'pasta', label: 'Pasta', keywords: ['pasta', 'bolognese', 'osso buco'], scoreKey: 'pasta-sub' },
       { id: 'pizza', label: 'Pizza', keywords: ['pizza'] },
       { id: 'risotto', label: 'Risotto', keywords: ['risotto'] },
     ],
@@ -130,7 +130,7 @@ const DISH_CATEGORIES = [
     keywords: ['cheese', 'charcuterie'],
     Icon: CheeseIcon,
     subCategories: [
-      { id: 'cheese', label: 'Cheese', keywords: ['cheese'] },
+      { id: 'cheese', label: 'Cheese', keywords: ['cheese'], scoreKey: 'cheese-sub' },
       { id: 'charcuterie', label: 'Charcuterie', keywords: ['charcuterie'] },
     ],
   },
@@ -181,18 +181,17 @@ export default function SommelierView({ wines, racks }) {
   const [occasion, setOccasion] = useState('casual');
 
   const activeKeywords = selectedSub ? selectedSub.keywords : selectedDish?.keywords ?? [];
+  const activeKey = selectedSub ? (selectedSub.scoreKey ?? selectedSub.id) : selectedDish?.id;
 
   const varietalScores = useMemo(() => {
-    if (!selectedDish) return {};
+    if (!selectedDish || !activeKey) return {};
     const scores = {};
-    Object.entries(WINE_PAIRINGS).forEach(([varietal, pairings]) => {
-      const matchCount = pairings.filter(food =>
-        activeKeywords.some(kw => food.toLowerCase().includes(kw.toLowerCase()))
-      ).length;
-      if (matchCount > 0) scores[varietal] = matchCount;
+    Object.entries(VARIETAL_PAIRING_SCORES).forEach(([varietal, categoryScores]) => {
+      const score = categoryScores[activeKey] ?? 0;
+      if (score > 0) scores[varietal] = score;
     });
     return scores;
-  }, [selectedDish, activeKeywords]);
+  }, [selectedDish, activeKey]);
 
   const recommendedVarietals = useMemo(() => Object.keys(varietalScores), [varietalScores]);
 
