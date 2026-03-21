@@ -372,7 +372,7 @@ export const VARIETAL_PAIRING_SCORES = {
     'fish': 4, 'salmon': 3, 'white-fish': 5,
   },
   'Chablis': {
-    'seafood': 5, 'oysters': 5, 'shrimp': 4, 'sushi': 4,
+    'seafood': 5, 'oysters': 5, 'caviar': 4, 'shrimp': 4, 'sushi': 4,
     'fish': 4, 'white-fish': 4,
     'cheese': 3, 'cheese-sub': 3,
   },
@@ -435,7 +435,7 @@ export const VARIETAL_PAIRING_SCORES = {
     'cheese': 3, 'cheese-sub': 3,
   },
   'Riesling': {
-    'fish': 4, 'trout': 5, 'salmon': 3, 'white-fish': 3,
+    'fish': 4, 'trout': 5, 'salmon': 3, 'white-fish': 3, 'sushi': 3,
     'poultry': 3, 'duck': 4,
     'pork': 5, 'pork-chops': 5, 'pork-belly': 4, 'ham': 3,
     'cheese': 3, 'cheese-sub': 3,
@@ -456,7 +456,7 @@ export const VARIETAL_PAIRING_SCORES = {
     'vegetables': 3, 'mushrooms': 3,
   },
   'Sauvignon Blanc': {
-    'seafood': 4, 'oysters': 4, 'shrimp': 4,
+    'seafood': 4, 'oysters': 4, 'shrimp': 4, 'sushi': 3,
     'fish': 4, 'white-fish': 4, 'salmon': 3,
     'cheese': 4, 'cheese-sub': 4,
     'vegetables': 3, 'salad': 3,
@@ -486,7 +486,7 @@ export const VARIETAL_PAIRING_SCORES = {
     'pasta': 2,
   },
   'Crémant': {
-    'seafood': 4, 'oysters': 4, 'shrimp': 3,
+    'seafood': 4, 'oysters': 4, 'caviar': 3, 'shrimp': 3, 'sushi': 3,
     'fish': 3, 'salmon': 3,
     'pork': 3, 'ham': 3,
     'cheese': 3, 'cheese-sub': 3, 'charcuterie': 3,
