@@ -203,7 +203,7 @@ export const DELICATE_PAIRING_KEYS = new Set([
 export const PREPARATION_MODIFIERS = {
   light: {
     'Sauvignon Blanc': 1, 'Riesling': 1, 'Grüner Veltliner': 1,
-    'Chablis': 1, 'Albariño': 1, 'Crémant': 1, 'Champagne Blend': 1,
+    'Chablis': 1, 'Albariño': 1, 'Crémant': 1, 'Champagne Blend': 1, 'Sparkling Wine': 1,
     'Gamay': 1, 'Pinot Noir': 1, 'Rosé': 1, 'Prosecco': 1,
     'Chardonnay': -1, 'Viognier': -1, 'Roussanne': -1, 'Marsanne': -1,
     'Cabernet Sauvignon': -1, 'Syrah': -1, 'Malbec': -1,
@@ -500,7 +500,7 @@ export const VARIETAL_PAIRING_SCORES = {
     'vegetables': 2,
   },
   'Sparkling Wine': {
-    'seafood': 4, 'oysters': 4, 'caviar': 4, 'shrimp': 3,
+    'seafood': 4, 'oysters': 4, 'caviar': 4, 'shrimp': 3, 'sushi': 4,
     'fish': 2,
     'pork': 2, 'ham': 2,
     'cheese': 3, 'cheese-sub': 3, 'charcuterie': 3,
