@@ -500,7 +500,7 @@ export const VARIETAL_PAIRING_SCORES = {
     'vegetables': 2,
   },
   'Sparkling Wine': {
-    'seafood': 4, 'oysters': 4, 'shrimp': 3,
+    'seafood': 4, 'oysters': 4, 'caviar': 4, 'shrimp': 3,
     'fish': 2,
     'pork': 2, 'ham': 2,
     'cheese': 3, 'cheese-sub': 3, 'charcuterie': 3,
