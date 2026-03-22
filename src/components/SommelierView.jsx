@@ -299,7 +299,13 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
 
   const recommendedBottles = useMemo(() => {
     if (!recommendedVarietals.length) return [];
-    const matching = wines.filter(w => recommendedVarietals.includes(w.varietal));
+    // Only recommend wines that are ready or in their final year — no point
+    // serving something that shouldn't be opened yet.
+    const matching = wines.filter(w => {
+      if (!recommendedVarietals.includes(w.varietal)) return false;
+      const status = getDrinkabilityStatus(w);
+      return !status || status === DRINKABILITY_STATUS.READY_NOW || status === DRINKABILITY_STATUS.FINAL_YEAR;
+    });
 
     const sorted = [...matching].sort((a, b) => {
       const scoreDiff = compositeScore(b) - compositeScore(a);
@@ -525,6 +531,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
                     </div>
                     <div className="flex items-center gap-2.5 shrink-0">
                       {wine.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{wine.quantity}</span>}
+                      <span className="text-xs text-gray-300 tabular-nums font-mono w-6 text-right" title="Pairing score">{compositeScore(wine).toFixed(0)}</span>
                       {status && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[status]}`}>{status}</span>}
                     </div>
                   </div>
@@ -543,6 +550,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
                       <span className="text-xs font-black uppercase tracking-widest text-amber-500 pt-0.5">Pick</span>
                       <div className="flex items-center gap-2.5 shrink-0">
                         {topPick.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{topPick.quantity}</span>}
+                        <span className="text-xs text-gray-400 tabular-nums font-mono" title="Pairing score">{compositeScore(topPick).toFixed(0)}</span>
                         {topStatus && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[topStatus]}`}>{topStatus}</span>}
                       </div>
                     </div>
