@@ -208,6 +208,42 @@ function getRackPositions(wine, wines, racks) {
   ).sort((a, b) => a.rackName.localeCompare(b.rackName) || a.label.localeCompare(b.label));
 }
 
+function ScoreTag({ breakdown, preparation }) {
+  const { pairing, region, peak, tannin, prep, rating, occasion } = breakdown;
+  const total = pairing + region + peak + tannin + prep + rating + occasion;
+  const rows = [
+    { label: 'Pairing fit', value: pairing },
+    { label: 'Peak proximity', value: peak },
+    region   !== 0 && { label: 'Region', value: region },
+    tannin   !== 0 && { label: 'Tannin', value: tannin },
+    prep     !== 0 && { label: preparation === 'light' ? 'Light prep' : 'Rich prep', value: prep },
+    rating   !== 0 && { label: 'Your rating', value: rating },
+    occasion !== 0 && { label: 'Occasion', value: occasion },
+  ].filter(Boolean);
+  return (
+    <div className="relative group/score flex items-center">
+      <span className="text-xs text-gray-300 tabular-nums font-mono cursor-default select-none">{total}</span>
+      <div className="absolute bottom-full right-0 mb-2 hidden group-hover/score:block z-10 pointer-events-none">
+        <div className="bg-gray-900 text-white rounded-lg shadow-xl p-3 w-44">
+          <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Score breakdown</p>
+          {rows.map(({ label, value }) => (
+            <div key={label} className="flex items-center justify-between gap-3 py-0.5">
+              <span className="text-xs text-gray-300">{label}</span>
+              <span className={`text-xs font-bold tabular-nums ${value > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {value > 0 ? '+' : ''}{value}
+              </span>
+            </div>
+          ))}
+          <div className="border-t border-gray-700 mt-2 pt-2 flex items-center justify-between">
+            <span className="text-xs text-gray-400">Total</span>
+            <span className="text-xs font-black text-white tabular-nums">{total}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SommelierView({ wines, racks, getRatingInfo }) {
   const [selectedDish, setSelectedDish] = useState(null);
   const [selectedSub, setSelectedSub] = useState(null);
@@ -294,41 +330,6 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
     return b.pairing + b.region + b.peak + b.tannin + b.prep + b.rating + b.occasion;
   };
 
-  const ScoreTag = ({ wine }) => {
-    const b = scoreBreakdown(wine);
-    const total = b.pairing + b.region + b.peak + b.tannin + b.prep + b.rating + b.occasion;
-    const rows = [
-      { label: 'Pairing fit', value: b.pairing },
-      { label: 'Peak proximity', value: b.peak },
-      b.region   !== 0 && { label: 'Region', value: b.region },
-      b.tannin   !== 0 && { label: 'Tannin', value: b.tannin },
-      b.prep     !== 0 && { label: preparation === 'light' ? 'Light prep' : 'Rich prep', value: b.prep },
-      b.rating   !== 0 && { label: 'Your rating', value: b.rating },
-      b.occasion !== 0 && { label: 'Occasion', value: b.occasion },
-    ].filter(Boolean);
-    return (
-      <div className="relative group/score flex items-center">
-        <span className="text-xs text-gray-300 tabular-nums font-mono cursor-default select-none">{total}</span>
-        <div className="absolute bottom-full right-0 mb-2 hidden group-hover/score:block z-10 pointer-events-none">
-          <div className="bg-gray-900 text-white rounded-lg shadow-xl p-3 w-44">
-            <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Score breakdown</p>
-            {rows.map(({ label, value }) => (
-              <div key={label} className="flex items-center justify-between gap-3 py-0.5">
-                <span className="text-xs text-gray-300">{label}</span>
-                <span className={`text-xs font-bold tabular-nums ${value > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {value > 0 ? '+' : ''}{value}
-                </span>
-              </div>
-            ))}
-            <div className="border-t border-gray-700 mt-2 pt-2 flex items-center justify-between">
-              <span className="text-xs text-gray-400">Total</span>
-              <span className="text-xs font-black text-white tabular-nums">{total}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const recommendedBottles = useMemo(() => {
     if (!recommendedVarietals.length) return [];
@@ -564,7 +565,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
                     </div>
                     <div className="flex items-center gap-2.5 shrink-0">
                       {wine.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{wine.quantity}</span>}
-                      <ScoreTag wine={wine} />
+                      <ScoreTag breakdown={scoreBreakdown(wine)} preparation={preparation} />
                       {status && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[status]}`}>{status}</span>}
                     </div>
                   </div>
@@ -583,7 +584,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
                       <span className="text-xs font-black uppercase tracking-widest text-amber-500 pt-0.5">Pick</span>
                       <div className="flex items-center gap-2.5 shrink-0">
                         {topPick.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{topPick.quantity}</span>}
-                        <ScoreTag wine={topPick} />
+                        <ScoreTag breakdown={scoreBreakdown(topPick)} preparation={preparation} />
                         {topStatus && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[topStatus]}`}>{topStatus}</span>}
                       </div>
                     </div>
