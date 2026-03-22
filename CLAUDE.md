@@ -157,6 +157,7 @@ Constants live in `src/constants.js`; utility functions in `src/utils.js`. Impor
 - **`COLORS`** — 18-color array for varietal/country visualization and rack bottle tokens
 - **`VARIETALS`** — grouped varietal options for the Add/Edit Wine form
 - **`WINE_REGIONS`** — country → region/state options for the Add/Edit Wine form
+- **`PAIRING_KEYS`** — 38-entry object of all dish/sub-category score keys (e.g. `PAIRING_KEYS.CAVIAR`, `PAIRING_KEYS.RED_MEAT`). Imported by both `data.js` and `SommelierView.jsx`. Always use these constants — never raw strings — in `VARIETAL_PAIRING_SCORES`, `REGION_SCORE_MODIFIERS`, `ROBUST/DELICATE_PAIRING_KEYS`, `PREPARATION_MODIFIERS`, and `DISH_CATEGORIES`.
 
 **`src/utils.js`**
 - **`getColorByIndex(i)`** — cycles through `COLORS` by index
@@ -252,4 +253,4 @@ Ordered by priority:
 6. **Replace magic strings with named constants** — `'dashboard'`, `'rack'`, `'Other'`, `'NV'` appear 9+ times across files; should live in `constants.js`.
 7. **Consolidate `DetailModal` boilerplate** in `WineCellar.jsx:635–836` — 5 near-identical invocations with `isOpen={!!selectedX}` / `onClose={() => setSelectedX(null)}`; consider a factory helper.
 8. **Extract rowspan lookahead logic** from `WineCellar.jsx:514–535` into a utility function for readability.
-9. **Enforce pairing score key strings** — all keys used in `VARIETAL_PAIRING_SCORES`, `REGION_SCORE_MODIFIERS`, `ROBUST/DELICATE_PAIRING_KEYS`, and `PREPARATION_MODIFIERS` in `data.js` are raw strings (e.g. `'caviar'`, `'sushi'`, `'red-meat'`). They must exactly match the `id`/`scoreKey` values in `DISH_CATEGORIES` in `SommelierView.jsx`, but there is no enforcement — typos silently score 0. Fix: extract all score keys into a `PAIRING_KEYS` constant object in `constants.js` and import it in both files.
+~~9. **Enforce pairing score key strings**~~ — fixed; all 38 keys now defined in `PAIRING_KEYS` in `constants.js` and used via computed property syntax throughout `data.js` and `SommelierView.jsx`.
