@@ -269,32 +269,65 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
     );
   };
 
-  const compositeScore = (wine) => {
-    // Pairing fit is weighted 2× so it dominates over readiness bonuses.
-    // A poor pairing match should never outrank a great one just because it's at peak.
-    const pairingScore = (varietalScores[wine.varietal] ?? 0) * 2;
-    const regionBonus = REGION_SCORE_MODIFIERS[wine.country]?.[wine.varietal]?.[activeKey] ?? 0;
-    const peakBonus = getPeakProximityBonus(wine);
-    // Young wine tannin adjustment: not-yet-ready wines pair better with robust
-    // (fatty/rich) dishes and worse with delicate ones.
+  const scoreBreakdown = (wine) => {
+    const pairing = (varietalScores[wine.varietal] ?? 0) * 2;
+    const region = REGION_SCORE_MODIFIERS[wine.country]?.[wine.varietal]?.[activeKey] ?? 0;
+    const peak = getPeakProximityBonus(wine);
     const status = getDrinkabilityStatus(wine);
     const notReady = status === DRINKABILITY_STATUS.AGE_1_5 || status === DRINKABILITY_STATUS.AGE_5_PLUS;
-    const tanninAdjust = notReady && activeKey
+    const tannin = notReady && activeKey
       ? (ROBUST_PAIRING_KEYS.has(activeKey) ? 1 : DELICATE_PAIRING_KEYS.has(activeKey) ? -1 : 0)
       : 0;
-    const prepBonus = preparation ? (PREPARATION_MODIFIERS[preparation]?.[wine.varietal] ?? 0) : 0;
-    // Personal rating bonus: wines you've rated highly surface above equally-scored unknowns.
+    const prep = preparation ? (PREPARATION_MODIFIERS[preparation]?.[wine.varietal] ?? 0) : 0;
     const { myRating } = getRatingInfo ? getRatingInfo(getWineKey(wine)) : { myRating: null };
-    const ratingBonus = myRating >= 4 ? 1 : myRating !== null && myRating <= 2 ? -1 : 0;
-    const base = pairingScore + regionBonus + peakBonus + tanninAdjust + prepBonus + ratingBonus;
-    // Occasion bonus: nudges ranking without hiding wines.
-    // Casual surfaces everyday bottles; Fancy/Celebration surface special bottles.
-    const occasionBonus = occasion === 'casual'
+    const rating = myRating >= 4 ? 1 : myRating !== null && myRating <= 2 ? -1 : 0;
+    const occasion_ = occasion === 'casual'
       ? (isSpecialBottle(wine) ? -1 : 1)
       : occasion === 'fancy' && isSpecialBottle(wine) ? 1
       : occasion === 'celebration' && isSpecialBottle(wine) ? 2
       : 0;
-    return base + occasionBonus;
+    return { pairing, region, peak, tannin, prep, rating, occasion: occasion_ };
+  };
+
+  const compositeScore = (wine) => {
+    const b = scoreBreakdown(wine);
+    return b.pairing + b.region + b.peak + b.tannin + b.prep + b.rating + b.occasion;
+  };
+
+  const ScoreTag = ({ wine }) => {
+    const b = scoreBreakdown(wine);
+    const total = b.pairing + b.region + b.peak + b.tannin + b.prep + b.rating + b.occasion;
+    const rows = [
+      { label: 'Pairing fit', value: b.pairing },
+      { label: 'Peak proximity', value: b.peak },
+      b.region   !== 0 && { label: 'Region', value: b.region },
+      b.tannin   !== 0 && { label: 'Tannin', value: b.tannin },
+      b.prep     !== 0 && { label: preparation === 'light' ? 'Light prep' : 'Rich prep', value: b.prep },
+      b.rating   !== 0 && { label: 'Your rating', value: b.rating },
+      b.occasion !== 0 && { label: 'Occasion', value: b.occasion },
+    ].filter(Boolean);
+    return (
+      <div className="relative group/score flex items-center">
+        <span className="text-xs text-gray-300 tabular-nums font-mono cursor-default select-none">{total}</span>
+        <div className="absolute bottom-full right-0 mb-2 hidden group-hover/score:block z-10 pointer-events-none">
+          <div className="bg-gray-900 text-white rounded-lg shadow-xl p-3 w-44">
+            <p className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Score breakdown</p>
+            {rows.map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between gap-3 py-0.5">
+                <span className="text-xs text-gray-300">{label}</span>
+                <span className={`text-xs font-bold tabular-nums ${value > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {value > 0 ? '+' : ''}{value}
+                </span>
+              </div>
+            ))}
+            <div className="border-t border-gray-700 mt-2 pt-2 flex items-center justify-between">
+              <span className="text-xs text-gray-400">Total</span>
+              <span className="text-xs font-black text-white tabular-nums">{total}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const recommendedBottles = useMemo(() => {
@@ -531,7 +564,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
                     </div>
                     <div className="flex items-center gap-2.5 shrink-0">
                       {wine.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{wine.quantity}</span>}
-                      <span className="text-xs text-gray-300 tabular-nums font-mono w-6 text-right" title="Pairing score">{compositeScore(wine).toFixed(0)}</span>
+                      <ScoreTag wine={wine} />
                       {status && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[status]}`}>{status}</span>}
                     </div>
                   </div>
@@ -550,7 +583,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
                       <span className="text-xs font-black uppercase tracking-widest text-amber-500 pt-0.5">Pick</span>
                       <div className="flex items-center gap-2.5 shrink-0">
                         {topPick.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{topPick.quantity}</span>}
-                        <span className="text-xs text-gray-400 tabular-nums font-mono" title="Pairing score">{compositeScore(topPick).toFixed(0)}</span>
+                        <ScoreTag wine={topPick} />
                         {topStatus && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[topStatus]}`}>{topStatus}</span>}
                       </div>
                     </div>
