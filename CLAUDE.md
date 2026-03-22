@@ -189,16 +189,18 @@ All three pairing-related features share a single source of truth: `WINE_PAIRING
 Works the **reverse direction**: given a dish category (and optional sub-category), finds matching wines.
 
 1. **Score each varietal** (`varietalScores`): primary source is `VARIETAL_PAIRING_SCORES` in `data.js`, keyed by dish/sub-category id (scores 1–5). For varietals not in the score table, falls back to text-matching against `WINE_PAIRINGS` keywords (capped at 2).
-2. **Composite score** per bottle: `(pairingScore × 2) + regionBonus + peakProximityBonus + tanninAdjust + prepBonus + ratingBonus + occasionBonus`
+2. **Readiness filter**: only wines with status `Ready Now` or `Final Year` are recommended — wines not yet drinkable are excluded entirely. Wines with no drink window pass through.
+3. **Composite score** per bottle: `(pairingScore × 2) + regionBonus + peakProximityBonus + tanninAdjust + prepBonus + ratingBonus + occasionBonus`
    - `regionBonus`: per-country varietal bonuses from `REGION_SCORE_MODIFIERS`
-   - `peakProximityBonus`: continuous 0–4 bonus based on position within drink window
-   - `tanninAdjust`: not-ready wines score +1 on robust dishes, −1 on delicate dishes
+   - `peakProximityBonus`: continuous 0–4 bonus based on position within drink window (peaks at midpoint, decays gracefully 2 years past end)
+   - `tanninAdjust`: not-yet-ready wines score +1 on robust dishes, −1 on delicate dishes
    - `prepBonus`: light/rich preparation style modifier from `PREPARATION_MODIFIERS`
    - `ratingBonus`: +1 if personally rated ≥4, −1 if rated ≤2
    - `occasionBonus`: casual surfaces everyday bottles; fancy/celebration surfaces special bottles
-3. **Filter cellar** to wines whose varietal has score > 0, then sort by composite score descending.
-4. **Top result** is labelled "Pick". Each wine shows `· good with X, Y` (matched sub-category labels) inline.
-5. **Target Varietals** shows up to 5 varietals sorted by pairing score descending.
+4. **Score breakdown**: each wine displays its composite score; hovering reveals a `ScoreTag` tooltip breaking down every contributing factor (pairing fit, peak proximity, region, tannin, prep, rating, occasion) with green/red color coding. Zero-value factors are omitted. `ScoreTag` is a module-level component (not defined inside render).
+5. **Filter cellar** to wines whose varietal has score > 0 and are ready to drink, then sort by composite score descending.
+6. **Top result** is labelled "Pick". Each wine shows `· good with X, Y` (matched sub-category labels) inline.
+7. **Target Varietals** shows up to 5 varietals sorted by pairing score descending.
 
 **Three-level filtering**: Casual/Fancy/Celebration → primary dish category → optional sub-category. Selecting a sub-category narrows `activeKeywords` and `activeKey`; deselecting returns to the full category.
 
@@ -248,6 +250,7 @@ Ordered by priority:
 ### React Anti-patterns
 4. **Fix array-index key in WineList.jsx:9** — `<WineCard key={idx} ...>` should use `getWineKey(wine)` for stable identity.
 5. **Move `statusOrder` map out of render** in `useWineFiltering.js:54` — recreated on every sort call; hoist to module-level constant.
+~~**`ScoreTag` defined inside render**~~ — fixed; hoisted to module-level component in `SommelierView.jsx`.
 
 ### Tech Debt (larger)
 6. **Replace magic strings with named constants** — `'dashboard'`, `'rack'`, `'Other'`, `'NV'` appear 9+ times across files; should live in `constants.js`.
