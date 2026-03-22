@@ -38,6 +38,54 @@ export const VARIETALS = {
   'Dessert & Fortified': ['Late Harvest Riesling', 'Port', 'Sauternes', 'Sherry'],
 };
 
+export const PAIRING_KEYS = {
+  // Category keys
+  RED_MEAT: 'red-meat',
+  POULTRY: 'poultry',
+  PORK: 'pork',
+  FISH: 'fish',
+  SEAFOOD: 'seafood',
+  PASTA: 'pasta',
+  CHEESE: 'cheese',
+  VEGETABLES: 'vegetables',
+  // Sub-category keys — Red Meat
+  STEAK: 'steak',
+  LAMB: 'lamb',
+  RIBS: 'ribs',
+  GAME: 'game',
+  CHORIZO: 'chorizo',
+  // Sub-category keys — Poultry
+  CHICKEN: 'chicken',
+  DUCK: 'duck',
+  TURKEY: 'turkey',
+  // Sub-category keys — Pork
+  PORK_CHOPS: 'pork-chops',
+  PORK_BELLY: 'pork-belly',
+  HAM: 'ham',
+  // Sub-category keys — Fish
+  SALMON: 'salmon',
+  TROUT: 'trout',
+  WHITE_FISH: 'white-fish',
+  // Sub-category keys — Seafood
+  OYSTERS: 'oysters',
+  LOBSTER: 'lobster',
+  SHRIMP: 'shrimp',
+  SUSHI: 'sushi',
+  CAVIAR: 'caviar',
+  // Sub-category keys — Pasta & Pizza
+  PASTA_SUB: 'pasta-sub',
+  PIZZA: 'pizza',
+  RISOTTO: 'risotto',
+  // Sub-category keys — Cheese
+  CHEESE_SUB: 'cheese-sub',
+  CHARCUTERIE: 'charcuterie',
+  // Sub-category keys — Vegetables
+  SALAD: 'salad',
+  MUSHROOMS: 'mushrooms',
+  ROASTED: 'roasted',
+  MEDITERRANEAN: 'mediterranean',
+};
+
 export const WINE_REGIONS = {
   'Argentina': ['Luján de Cuyo', 'Mendoza', 'Patagonia', 'Salta', 'San Juan'],
   'Australia': ['Barossa Valley', 'Clare Valley', 'Coonawarra', 'Eden Valley', 'Hunter Valley', 'Margaret River', 'McLaren Vale', 'Yarra Valley'],

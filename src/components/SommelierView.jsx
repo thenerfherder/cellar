@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { WINE_PAIRINGS, VARIETAL_PAIRING_SCORES, REGION_SCORE_MODIFIERS, ROBUST_PAIRING_KEYS, DELICATE_PAIRING_KEYS, PREPARATION_MODIFIERS, getPairingsForWine } from '../data';
 import { getDrinkabilityStatus, getWineKey, isSpecialBottle } from '../utils';
-import { DRINKABILITY_STATUS, CONFIG } from '../constants';
+import { DRINKABILITY_STATUS, CONFIG, PAIRING_KEYS } from '../constants';
 
 const RedMeatIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -77,95 +77,95 @@ const PorkIcon = ({ className }) => (
 
 const DISH_CATEGORIES = [
   {
-    id: 'red-meat',
+    id: PAIRING_KEYS.RED_MEAT,
     label: 'Red Meat',
     keywords: ['steak', 'beef', 'lamb', 'brisket', 'venison', 'ribs', 'short ribs', 'wild game', 'game', 'chorizo', 'chops'],
     Icon: RedMeatIcon,
     subCategories: [
-      { id: 'steak', label: 'Steak', keywords: ['steak', 'beef'] },
-      { id: 'lamb', label: 'Lamb', keywords: ['lamb', 'chops'] },
-      { id: 'ribs', label: 'Ribs & Brisket', keywords: ['ribs', 'short ribs', 'brisket'] },
-      { id: 'game', label: 'Game', keywords: ['venison', 'wild game', 'game'] },
-      { id: 'chorizo', label: 'Chorizo', keywords: ['chorizo'] },
+      { id: PAIRING_KEYS.STEAK, label: 'Steak', keywords: ['steak', 'beef'] },
+      { id: PAIRING_KEYS.LAMB, label: 'Lamb', keywords: ['lamb', 'chops'] },
+      { id: PAIRING_KEYS.RIBS, label: 'Ribs & Brisket', keywords: ['ribs', 'short ribs', 'brisket'] },
+      { id: PAIRING_KEYS.GAME, label: 'Game', keywords: ['venison', 'wild game', 'game'] },
+      { id: PAIRING_KEYS.CHORIZO, label: 'Chorizo', keywords: ['chorizo'] },
     ],
   },
   {
-    id: 'poultry',
+    id: PAIRING_KEYS.POULTRY,
     label: 'Poultry',
     keywords: ['chicken', 'duck', 'turkey'],
     Icon: PoultryIcon,
     subCategories: [
-      { id: 'chicken', label: 'Chicken', keywords: ['chicken'] },
-      { id: 'duck', label: 'Duck', keywords: ['duck'] },
-      { id: 'turkey', label: 'Turkey', keywords: ['turkey'] },
+      { id: PAIRING_KEYS.CHICKEN, label: 'Chicken', keywords: ['chicken'] },
+      { id: PAIRING_KEYS.DUCK, label: 'Duck', keywords: ['duck'] },
+      { id: PAIRING_KEYS.TURKEY, label: 'Turkey', keywords: ['turkey'] },
     ],
   },
   {
-    id: 'pork',
+    id: PAIRING_KEYS.PORK,
     label: 'Pork',
     keywords: ['pork', 'tenderloin', 'prosciutto', 'ham', 'pancetta', 'belly'],
     Icon: PorkIcon,
     subCategories: [
-      { id: 'pork-chops', label: 'Chops', keywords: ['pork', 'tenderloin', 'pork chop'] },
-      { id: 'pork-belly', label: 'Belly', keywords: ['belly', 'pork belly'] },
-      { id: 'ham', label: 'Ham & Cured', keywords: ['ham', 'prosciutto', 'pancetta', 'cured'] },
+      { id: PAIRING_KEYS.PORK_CHOPS, label: 'Chops', keywords: ['pork', 'tenderloin', 'pork chop'] },
+      { id: PAIRING_KEYS.PORK_BELLY, label: 'Belly', keywords: ['belly', 'pork belly'] },
+      { id: PAIRING_KEYS.HAM, label: 'Ham & Cured', keywords: ['ham', 'prosciutto', 'pancetta', 'cured'] },
     ],
   },
   {
-    id: 'fish',
+    id: PAIRING_KEYS.FISH,
     label: 'Fish',
     keywords: ['salmon', 'fish', 'trout'],
     Icon: FishIcon,
     subCategories: [
-      { id: 'salmon', label: 'Salmon', keywords: ['salmon'] },
-      { id: 'trout', label: 'Trout', keywords: ['trout'] },
-      { id: 'white-fish', label: 'White Fish', keywords: ['fish'] },
+      { id: PAIRING_KEYS.SALMON, label: 'Salmon', keywords: ['salmon'] },
+      { id: PAIRING_KEYS.TROUT, label: 'Trout', keywords: ['trout'] },
+      { id: PAIRING_KEYS.WHITE_FISH, label: 'White Fish', keywords: ['fish'] },
     ],
   },
   {
-    id: 'seafood',
+    id: PAIRING_KEYS.SEAFOOD,
     label: 'Seafood',
     keywords: ['oyster', 'caviar', 'sushi', 'shrimp', 'seafood', 'lobster', 'ceviche'],
     Icon: SeafoodIcon,
     subCategories: [
-      { id: 'oysters', label: 'Oysters', keywords: ['oyster'] },
-      { id: 'lobster', label: 'Lobster', keywords: ['lobster', 'seafood'] },
-      { id: 'shrimp', label: 'Shrimp', keywords: ['shrimp'] },
-      { id: 'sushi', label: 'Sushi', keywords: ['sushi', 'ceviche'] },
-      { id: 'caviar', label: 'Caviar', keywords: ['caviar'] },
+      { id: PAIRING_KEYS.OYSTERS, label: 'Oysters', keywords: ['oyster'] },
+      { id: PAIRING_KEYS.LOBSTER, label: 'Lobster', keywords: ['lobster', 'seafood'] },
+      { id: PAIRING_KEYS.SHRIMP, label: 'Shrimp', keywords: ['shrimp'] },
+      { id: PAIRING_KEYS.SUSHI, label: 'Sushi', keywords: ['sushi', 'ceviche'] },
+      { id: PAIRING_KEYS.CAVIAR, label: 'Caviar', keywords: ['caviar'] },
     ],
   },
   {
-    id: 'pasta',
+    id: PAIRING_KEYS.PASTA,
     label: 'Pasta & Pizza',
     keywords: ['pasta', 'pizza', 'risotto', 'bolognese', 'osso buco'],
     Icon: PastaIcon,
     subCategories: [
-      { id: 'pasta', label: 'Pasta', keywords: ['pasta', 'bolognese', 'osso buco'], scoreKey: 'pasta-sub' },
-      { id: 'pizza', label: 'Pizza', keywords: ['pizza'] },
-      { id: 'risotto', label: 'Risotto', keywords: ['risotto'] },
+      { id: PAIRING_KEYS.PASTA, label: 'Pasta', keywords: ['pasta', 'bolognese', 'osso buco'], scoreKey: PAIRING_KEYS.PASTA_SUB },
+      { id: PAIRING_KEYS.PIZZA, label: 'Pizza', keywords: ['pizza'] },
+      { id: PAIRING_KEYS.RISOTTO, label: 'Risotto', keywords: ['risotto'] },
     ],
   },
   {
-    id: 'cheese',
+    id: PAIRING_KEYS.CHEESE,
     label: 'Cheese',
     keywords: ['cheese', 'charcuterie'],
     Icon: CheeseIcon,
     subCategories: [
-      { id: 'cheese', label: 'Cheese', keywords: ['cheese'], scoreKey: 'cheese-sub' },
-      { id: 'charcuterie', label: 'Charcuterie', keywords: ['charcuterie'] },
+      { id: PAIRING_KEYS.CHEESE, label: 'Cheese', keywords: ['cheese'], scoreKey: PAIRING_KEYS.CHEESE_SUB },
+      { id: PAIRING_KEYS.CHARCUTERIE, label: 'Charcuterie', keywords: ['charcuterie'] },
     ],
   },
   {
-    id: 'vegetables',
+    id: PAIRING_KEYS.VEGETABLES,
     label: 'Vegetables',
     keywords: ['vegetable', 'ratatouille', 'salad', 'mediterranean', 'herb', 'roasted vegetables', 'mushroom'],
     Icon: VegetablesIcon,
     subCategories: [
-      { id: 'salad', label: 'Salad', keywords: ['salad'] },
-      { id: 'mushrooms', label: 'Mushrooms', keywords: ['mushroom'] },
-      { id: 'roasted', label: 'Roasted Veg', keywords: ['roasted vegetables', 'vegetable', 'ratatouille'] },
-      { id: 'mediterranean', label: 'Mediterranean', keywords: ['mediterranean', 'herb'] },
+      { id: PAIRING_KEYS.SALAD, label: 'Salad', keywords: ['salad'] },
+      { id: PAIRING_KEYS.MUSHROOMS, label: 'Mushrooms', keywords: ['mushroom'] },
+      { id: PAIRING_KEYS.ROASTED, label: 'Roasted Veg', keywords: ['roasted vegetables', 'vegetable', 'ratatouille'] },
+      { id: PAIRING_KEYS.MEDITERRANEAN, label: 'Mediterranean', keywords: ['mediterranean', 'herb'] },
     ],
   },
 ];
