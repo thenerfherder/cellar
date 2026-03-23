@@ -84,6 +84,19 @@ export const PAIRING_KEYS = {
   MUSHROOMS: 'mushrooms',
   ROASTED: 'roasted',
   MEDITERRANEAN: 'mediterranean',
+  // Sub-category keys — Spicy / Asian
+  SPICY: 'spicy',
+  THAI: 'thai',
+  INDIAN: 'indian',
+  CHINESE: 'chinese',
+  // Sub-category keys — Brunch
+  BRUNCH: 'brunch',
+  EGGS: 'eggs',
+  SMOKED_SALMON: 'smoked-salmon',
+  // Sub-category keys — Dessert
+  DESSERT: 'dessert',
+  FRUIT_DESSERT: 'fruit-dessert',
+  CHOCOLATE: 'chocolate',
 };
 
 export const WINE_REGIONS = {

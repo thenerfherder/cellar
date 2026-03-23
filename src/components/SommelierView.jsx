@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { WINE_PAIRINGS, VARIETAL_PAIRING_SCORES, REGION_SCORE_MODIFIERS, ROBUST_PAIRING_KEYS, DELICATE_PAIRING_KEYS, PREPARATION_MODIFIERS, getPairingsForWine } from '../data';
+import { WINE_PAIRINGS, VARIETAL_PAIRING_SCORES, REGION_SCORE_MODIFIERS, SUBREGION_SCORE_MODIFIERS, ROBUST_PAIRING_KEYS, DELICATE_PAIRING_KEYS, PREPARATION_MODIFIERS, getPairingsForWine } from '../data';
 import { getDrinkabilityStatus, getWineKey, isSpecialBottle } from '../utils';
 import { DRINKABILITY_STATUS, CONFIG, PAIRING_KEYS } from '../constants';
 
@@ -72,6 +72,35 @@ const PorkIcon = ({ className }) => (
     <ellipse cx="17" cy="13.5" rx="1.5" ry="1"/>
     <circle cx="16.4" cy="13.5" r="0.35" fill="currentColor" stroke="none"/>
     <circle cx="17.6" cy="13.5" r="0.35" fill="currentColor" stroke="none"/>
+  </svg>
+);
+
+const SpicyIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3C12 3 10 6 10 9C10 11.5 12.5 13 12.5 16C12.5 18.5 11 21 11 21"/>
+    <path d="M16 5C16 5 14.5 7.5 15 10C15.5 12 17.5 13 17.5 15.5C17.5 18 16 20 16 20"/>
+    <path d="M8 6C8 6 6.5 8.5 7 11C7.5 13 9.5 14 9.5 16.5C9.5 19 8 21 8 21"/>
+  </svg>
+);
+
+const BrunchIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M8.5 3H15.5L14 11C14 13 13 14.5 12 14.5C11 14.5 10 13 10 11L8.5 3Z"/>
+    <circle cx="11" cy="6" r="0.4" fill="currentColor" stroke="none"/>
+    <circle cx="13" cy="8" r="0.4" fill="currentColor" stroke="none"/>
+    <circle cx="11.5" cy="10" r="0.4" fill="currentColor" stroke="none"/>
+    <line x1="12" y1="14.5" x2="12" y2="20"/>
+    <line x1="8" y1="20" x2="16" y2="20"/>
+  </svg>
+);
+
+const DessertIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 15C4 12.5 7.5 10.5 12 10.5C16.5 10.5 20 12.5 20 15"/>
+    <path d="M3 15H21"/>
+    <path d="M5 15C5 15 5.5 20 12 20C18.5 20 19 15 19 15"/>
+    <path d="M12 10.5V7"/>
+    <path d="M9 7C9 7 9 4.5 12 4C15 4.5 15 7 15 7H9Z"/>
   </svg>
 );
 
@@ -166,6 +195,37 @@ const DISH_CATEGORIES = [
       { id: PAIRING_KEYS.MUSHROOMS, label: 'Mushrooms', keywords: ['mushroom'] },
       { id: PAIRING_KEYS.ROASTED, label: 'Roasted Veg', keywords: ['roasted vegetables', 'vegetable', 'ratatouille'] },
       { id: PAIRING_KEYS.MEDITERRANEAN, label: 'Mediterranean', keywords: ['mediterranean', 'herb'] },
+    ],
+  },
+  {
+    id: PAIRING_KEYS.SPICY,
+    label: 'Spicy',
+    keywords: ['spicy', 'thai', 'indian', 'chinese', 'curry', 'chili', 'szechuan'],
+    Icon: SpicyIcon,
+    subCategories: [
+      { id: PAIRING_KEYS.THAI, label: 'Thai', keywords: ['thai', 'curry', 'lemongrass'] },
+      { id: PAIRING_KEYS.INDIAN, label: 'Indian', keywords: ['indian', 'curry', 'chili'] },
+      { id: PAIRING_KEYS.CHINESE, label: 'Chinese', keywords: ['chinese', 'szechuan', 'dim sum'] },
+    ],
+  },
+  {
+    id: PAIRING_KEYS.BRUNCH,
+    label: 'Brunch',
+    keywords: ['eggs', 'smoked salmon', 'brunch', 'benedict', 'omelette'],
+    Icon: BrunchIcon,
+    subCategories: [
+      { id: PAIRING_KEYS.EGGS, label: 'Eggs', keywords: ['eggs', 'omelette', 'frittata', 'benedict'] },
+      { id: PAIRING_KEYS.SMOKED_SALMON, label: 'Smoked Salmon', keywords: ['smoked salmon', 'lox'] },
+    ],
+  },
+  {
+    id: PAIRING_KEYS.DESSERT,
+    label: 'Dessert',
+    keywords: ['dessert', 'chocolate', 'fruit', 'tart', 'cake'],
+    Icon: DessertIcon,
+    subCategories: [
+      { id: PAIRING_KEYS.FRUIT_DESSERT, label: 'Fruit & Tarts', keywords: ['fruit', 'tart', 'fruit dessert', 'cake'] },
+      { id: PAIRING_KEYS.CHOCOLATE, label: 'Chocolate', keywords: ['chocolate', 'dark chocolate'] },
     ],
   },
 ];
@@ -359,7 +419,9 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
 
   const scoreBreakdown = (wine) => {
     const pairing = (varietalScores[wine.varietal] ?? 0) * 2;
-    const region = REGION_SCORE_MODIFIERS[wine.country]?.[wine.varietal]?.[activeKey] ?? 0;
+    const countryBonus = REGION_SCORE_MODIFIERS[wine.country]?.[wine.varietal]?.[activeKey] ?? 0;
+    const subregionBonus = SUBREGION_SCORE_MODIFIERS[wine.state]?.[wine.varietal]?.[activeKey] ?? 0;
+    const region = countryBonus + subregionBonus;
     const peak = getPeakProximityBonus(wine);
     const status = getDrinkabilityStatus(wine);
     const notReady = status === DRINKABILITY_STATUS.AGE_1_5 || status === DRINKABILITY_STATUS.AGE_5_PLUS;
@@ -461,7 +523,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
           {occasion === 'casual' ? 'Prioritising everyday bottles' : occasion === 'fancy' ? 'Prioritising special bottles' : 'Prioritising your finest bottles'}
         </p>
       </div>
-      <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 sm:gap-3 mb-4">
+      <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-11 gap-2 sm:gap-3 mb-4">
         {DISH_CATEGORIES.map(dish => {
           const isSelected = selectedDish?.id === dish.id;
           return (

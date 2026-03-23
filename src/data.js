@@ -182,6 +182,143 @@ export const REGION_SCORE_MODIFIERS = {
   },
 };
 
+// Sub-region (wine.state) pairing score adjustments — stacks on top of REGION_SCORE_MODIFIERS.
+// Rewards wines from their most iconic appellations (e.g. Burgundy Pinot gets the France bonus
+// AND the Burgundy bonus; a Vin de Pays Pinot only gets the France bonus).
+export const SUBREGION_SCORE_MODIFIERS = {
+  // France
+  'Burgundy':              {
+    'Pinot Noir':          { [PAIRING_KEYS.MUSHROOMS]: 1, [PAIRING_KEYS.DUCK]: 1 },
+    'Chardonnay':          { [PAIRING_KEYS.LOBSTER]: 1, [PAIRING_KEYS.WHITE_FISH]: 1 },
+  },
+  'Champagne':             {
+    'Champagne Blend':     { [PAIRING_KEYS.CAVIAR]: 1, [PAIRING_KEYS.OYSTERS]: 1 },
+  },
+  'Alsace':                {
+    'Riesling':            { [PAIRING_KEYS.PORK_CHOPS]: 1, [PAIRING_KEYS.DUCK]: 1 },
+    'Gewürztraminer':      { [PAIRING_KEYS.DUCK]: 1, [PAIRING_KEYS.PORK_BELLY]: 1 },
+    'Pinot Gris':          { [PAIRING_KEYS.PORK_CHOPS]: 1, [PAIRING_KEYS.PORK_BELLY]: 1 },
+  },
+  'Bordeaux':              {
+    'Bordeaux Blend':      { [PAIRING_KEYS.STEAK]: 1, [PAIRING_KEYS.LAMB]: 1 },
+    'Cabernet Sauvignon':  { [PAIRING_KEYS.STEAK]: 1, [PAIRING_KEYS.LAMB]: 1 },
+    'Cabernet Franc':      { [PAIRING_KEYS.LAMB]: 1 },
+  },
+  'Rhône Valley':          {
+    'Syrah':               { [PAIRING_KEYS.LAMB]: 1, [PAIRING_KEYS.GAME]: 1 },
+    'Grenache Blend':      { [PAIRING_KEYS.MEDITERRANEAN]: 1, [PAIRING_KEYS.LAMB]: 1 },
+    'Rhône Blend':         { [PAIRING_KEYS.LAMB]: 1, [PAIRING_KEYS.MEDITERRANEAN]: 1 },
+    'Mourvèdre':           { [PAIRING_KEYS.GAME]: 1, [PAIRING_KEYS.LAMB]: 1 },
+  },
+  'Loire Valley':          {
+    'Sauvignon Blanc':     { [PAIRING_KEYS.OYSTERS]: 1, [PAIRING_KEYS.CHEESE_SUB]: 1 },
+    'Chenin Blanc':        { [PAIRING_KEYS.CHICKEN]: 1 },
+    'Cabernet Franc':      { [PAIRING_KEYS.LAMB]: 1, [PAIRING_KEYS.MUSHROOMS]: 1 },
+  },
+  'Beaujolais':            {
+    'Gamay':               { [PAIRING_KEYS.CHARCUTERIE]: 1, [PAIRING_KEYS.CHICKEN]: 1 },
+  },
+  'Provence':              {
+    'Rosé':                { [PAIRING_KEYS.MEDITERRANEAN]: 1, [PAIRING_KEYS.SALAD]: 1 },
+  },
+  // Italy
+  'Piedmont':              {
+    'Nebbiolo':            { [PAIRING_KEYS.PASTA_SUB]: 1, [PAIRING_KEYS.RISOTTO]: 1, [PAIRING_KEYS.MUSHROOMS]: 1 },
+    'Barbera':             { [PAIRING_KEYS.PIZZA]: 1, [PAIRING_KEYS.PASTA_SUB]: 1 },
+  },
+  'Tuscany':               {
+    'Sangiovese':          { [PAIRING_KEYS.PIZZA]: 1, [PAIRING_KEYS.PASTA_SUB]: 1 },
+    'Bordeaux Blend':      { [PAIRING_KEYS.STEAK]: 1, [PAIRING_KEYS.LAMB]: 1 },
+    'Cabernet Sauvignon':  { [PAIRING_KEYS.STEAK]: 1 },
+  },
+  'Friuli-Venezia Giulia': {
+    'Pinot Gris':          { [PAIRING_KEYS.HAM]: 1, [PAIRING_KEYS.WHITE_FISH]: 1 },
+  },
+  // Spain
+  'Rioja':                 {
+    'Tempranillo':         { [PAIRING_KEYS.CHORIZO]: 1, [PAIRING_KEYS.LAMB]: 1 },
+  },
+  'Ribera del Duero':      {
+    'Tempranillo':         { [PAIRING_KEYS.STEAK]: 1, [PAIRING_KEYS.LAMB]: 1 },
+    'Cabernet Sauvignon':  { [PAIRING_KEYS.STEAK]: 1 },
+  },
+  'Galicia':               {
+    'Albariño':            { [PAIRING_KEYS.OYSTERS]: 1, [PAIRING_KEYS.WHITE_FISH]: 1 },
+  },
+  'Jerez':                 {
+    'Sherry':              { [PAIRING_KEYS.CHARCUTERIE]: 1, [PAIRING_KEYS.CHEESE_SUB]: 1 },
+  },
+  // Germany
+  'Mosel':                 {
+    'Riesling':            { [PAIRING_KEYS.TROUT]: 1, [PAIRING_KEYS.DUCK]: 1 },
+  },
+  'Rheingau':              {
+    'Riesling':            { [PAIRING_KEYS.WHITE_FISH]: 1, [PAIRING_KEYS.PORK_CHOPS]: 1 },
+  },
+  // Austria
+  'Wachau':                {
+    'Riesling':            { [PAIRING_KEYS.TROUT]: 1, [PAIRING_KEYS.WHITE_FISH]: 1 },
+    'Grüner Veltliner':    { [PAIRING_KEYS.WHITE_FISH]: 1, [PAIRING_KEYS.SALAD]: 1 },
+  },
+  'Kamptal':               {
+    'Grüner Veltliner':    { [PAIRING_KEYS.WHITE_FISH]: 1 },
+  },
+  // Portugal
+  'Douro':                 {
+    'Port':                { [PAIRING_KEYS.CHEESE_SUB]: 1, [PAIRING_KEYS.CHOCOLATE]: 1 },
+  },
+  // Argentina
+  'Mendoza':               {
+    'Malbec':              { [PAIRING_KEYS.STEAK]: 1, [PAIRING_KEYS.RIBS]: 1 },
+  },
+  'Luján de Cuyo':         {
+    'Malbec':              { [PAIRING_KEYS.STEAK]: 1 },
+  },
+  // Australia
+  'Barossa Valley':        {
+    'Syrah':               { [PAIRING_KEYS.RIBS]: 1, [PAIRING_KEYS.STEAK]: 1 },
+  },
+  'Clare Valley':          {
+    'Riesling':            { [PAIRING_KEYS.TROUT]: 1, [PAIRING_KEYS.WHITE_FISH]: 1 },
+  },
+  'Yarra Valley':          {
+    'Pinot Noir':          { [PAIRING_KEYS.SALMON]: 1, [PAIRING_KEYS.DUCK]: 1 },
+  },
+  // New Zealand
+  'Marlborough':           {
+    'Sauvignon Blanc':     { [PAIRING_KEYS.OYSTERS]: 1, [PAIRING_KEYS.WHITE_FISH]: 1 },
+  },
+  'Central Otago':         {
+    'Pinot Noir':          { [PAIRING_KEYS.SALMON]: 1, [PAIRING_KEYS.DUCK]: 1 },
+  },
+  // USA
+  'California':            {
+    'Cabernet Sauvignon':  { [PAIRING_KEYS.STEAK]: 1, [PAIRING_KEYS.LAMB]: 1 },
+    'Chardonnay':          { [PAIRING_KEYS.LOBSTER]: 1 },
+    'Pinot Noir':          { [PAIRING_KEYS.SALMON]: 1 },
+    'Zinfandel':           { [PAIRING_KEYS.RIBS]: 1, [PAIRING_KEYS.CHORIZO]: 1 },
+  },
+  'Oregon':                {
+    'Pinot Noir':          { [PAIRING_KEYS.SALMON]: 1, [PAIRING_KEYS.MUSHROOMS]: 1 },
+    'Pinot Gris':          { [PAIRING_KEYS.WHITE_FISH]: 1, [PAIRING_KEYS.SHRIMP]: 1 },
+  },
+  'Washington':            {
+    'Cabernet Sauvignon':  { [PAIRING_KEYS.STEAK]: 1 },
+    'Merlot':              { [PAIRING_KEYS.STEAK]: 1, [PAIRING_KEYS.PORK_CHOPS]: 1 },
+    'Riesling':            { [PAIRING_KEYS.PORK_CHOPS]: 1, [PAIRING_KEYS.WHITE_FISH]: 1 },
+    'Syrah':               { [PAIRING_KEYS.LAMB]: 1 },
+  },
+  // Chile
+  'Maipo Valley':          {
+    'Cabernet Sauvignon':  { [PAIRING_KEYS.STEAK]: 1 },
+    'Carmenère':           { [PAIRING_KEYS.STEAK]: 1 },
+  },
+  'Colchagua Valley':      {
+    'Carmenère':           { [PAIRING_KEYS.STEAK]: 1, [PAIRING_KEYS.RIBS]: 1 },
+    'Cabernet Sauvignon':  { [PAIRING_KEYS.STEAK]: 1 },
+  },
+};
+
 // Which pairing keys are considered "robust" (fatty/rich) vs "delicate".
 // Used to adjust scores for wines not yet in their drink window —
 // young tannic wines benefit from fat and are less suited to delicate dishes.
@@ -191,11 +328,15 @@ export const ROBUST_PAIRING_KEYS = new Set([
   PAIRING_KEYS.CHEESE, PAIRING_KEYS.CHEESE_SUB, PAIRING_KEYS.CHARCUTERIE,
   PAIRING_KEYS.PASTA, PAIRING_KEYS.PASTA_SUB, PAIRING_KEYS.PIZZA, PAIRING_KEYS.RISOTTO,
   PAIRING_KEYS.POULTRY, PAIRING_KEYS.DUCK, PAIRING_KEYS.TURKEY,
+  PAIRING_KEYS.CHOCOLATE,
 ]);
 export const DELICATE_PAIRING_KEYS = new Set([
   PAIRING_KEYS.FISH, PAIRING_KEYS.SALMON, PAIRING_KEYS.TROUT, PAIRING_KEYS.WHITE_FISH,
   PAIRING_KEYS.SEAFOOD, PAIRING_KEYS.OYSTERS, PAIRING_KEYS.SHRIMP, PAIRING_KEYS.SUSHI, PAIRING_KEYS.CAVIAR, PAIRING_KEYS.LOBSTER,
   PAIRING_KEYS.VEGETABLES, PAIRING_KEYS.SALAD, PAIRING_KEYS.MEDITERRANEAN,
+  PAIRING_KEYS.SPICY, PAIRING_KEYS.THAI, PAIRING_KEYS.INDIAN, PAIRING_KEYS.CHINESE,
+  PAIRING_KEYS.BRUNCH, PAIRING_KEYS.EGGS, PAIRING_KEYS.SMOKED_SALMON,
+  PAIRING_KEYS.DESSERT, PAIRING_KEYS.FRUIT_DESSERT,
 ]);
 
 // Preparation-style modifiers applied on top of dish scores.
@@ -261,6 +402,8 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 2, [PAIRING_KEYS.CHARCUTERIE]: 4,
     [PAIRING_KEYS.PASTA]: 2, [PAIRING_KEYS.PASTA_SUB]: 2,
     [PAIRING_KEYS.VEGETABLES]: 2, [PAIRING_KEYS.MUSHROOMS]: 3,
+    [PAIRING_KEYS.SPICY]: 2, [PAIRING_KEYS.THAI]: 2, [PAIRING_KEYS.CHINESE]: 2,
+    [PAIRING_KEYS.BRUNCH]: 3, [PAIRING_KEYS.EGGS]: 3,
   },
   'Grenache': {
     [PAIRING_KEYS.RED_MEAT]: 4, [PAIRING_KEYS.LAMB]: 5, [PAIRING_KEYS.STEAK]: 2,
@@ -323,6 +466,8 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.VEGETABLES]: 4, [PAIRING_KEYS.MUSHROOMS]: 5, [PAIRING_KEYS.ROASTED]: 3,
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 3, [PAIRING_KEYS.CHARCUTERIE]: 2,
     [PAIRING_KEYS.PASTA]: 3, [PAIRING_KEYS.RISOTTO]: 3,
+    [PAIRING_KEYS.SPICY]: 2, [PAIRING_KEYS.CHINESE]: 2,
+    [PAIRING_KEYS.BRUNCH]: 2, [PAIRING_KEYS.SMOKED_SALMON]: 3,
   },
   'Red Blend': {
     [PAIRING_KEYS.RED_MEAT]: 5, [PAIRING_KEYS.STEAK]: 4, [PAIRING_KEYS.RIBS]: 4,
@@ -373,11 +518,14 @@ export const VARIETAL_PAIRING_SCORES = {
   'Albariño': {
     [PAIRING_KEYS.SEAFOOD]: 5, [PAIRING_KEYS.OYSTERS]: 5, [PAIRING_KEYS.SHRIMP]: 5, [PAIRING_KEYS.LOBSTER]: 3, [PAIRING_KEYS.SUSHI]: 4,
     [PAIRING_KEYS.FISH]: 4, [PAIRING_KEYS.SALMON]: 3, [PAIRING_KEYS.WHITE_FISH]: 5,
+    [PAIRING_KEYS.SPICY]: 2, [PAIRING_KEYS.THAI]: 3,
+    [PAIRING_KEYS.BRUNCH]: 2, [PAIRING_KEYS.SMOKED_SALMON]: 3,
   },
   'Chablis': {
     [PAIRING_KEYS.SEAFOOD]: 5, [PAIRING_KEYS.OYSTERS]: 5, [PAIRING_KEYS.CAVIAR]: 4, [PAIRING_KEYS.SHRIMP]: 4, [PAIRING_KEYS.SUSHI]: 4,
     [PAIRING_KEYS.FISH]: 4, [PAIRING_KEYS.WHITE_FISH]: 4,
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 3,
+    [PAIRING_KEYS.BRUNCH]: 3, [PAIRING_KEYS.SMOKED_SALMON]: 4,
   },
   'Chardonnay': {
     [PAIRING_KEYS.SEAFOOD]: 4, [PAIRING_KEYS.LOBSTER]: 5,
@@ -386,6 +534,7 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.FISH]: 4, [PAIRING_KEYS.WHITE_FISH]: 4, [PAIRING_KEYS.SALMON]: 3,
     [PAIRING_KEYS.PASTA]: 3, [PAIRING_KEYS.PASTA_SUB]: 3, [PAIRING_KEYS.RISOTTO]: 3,
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 3,
+    [PAIRING_KEYS.BRUNCH]: 3, [PAIRING_KEYS.EGGS]: 2, [PAIRING_KEYS.SMOKED_SALMON]: 3,
   },
   'Chenin Blanc': {
     [PAIRING_KEYS.POULTRY]: 4, [PAIRING_KEYS.CHICKEN]: 4,
@@ -394,12 +543,15 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 3,
     [PAIRING_KEYS.PASTA]: 2,
     [PAIRING_KEYS.VEGETABLES]: 3, [PAIRING_KEYS.ROASTED]: 3,
+    [PAIRING_KEYS.SPICY]: 2, [PAIRING_KEYS.INDIAN]: 2,
+    [PAIRING_KEYS.DESSERT]: 2, [PAIRING_KEYS.FRUIT_DESSERT]: 3,
   },
   'Gewürztraminer': {
     [PAIRING_KEYS.POULTRY]: 3, [PAIRING_KEYS.CHICKEN]: 3, [PAIRING_KEYS.DUCK]: 4,
     [PAIRING_KEYS.PORK]: 4, [PAIRING_KEYS.PORK_BELLY]: 4, [PAIRING_KEYS.HAM]: 3,
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 2, [PAIRING_KEYS.CHARCUTERIE]: 3,
     [PAIRING_KEYS.FISH]: 2, [PAIRING_KEYS.SALMON]: 3,
+    [PAIRING_KEYS.SPICY]: 5, [PAIRING_KEYS.THAI]: 4, [PAIRING_KEYS.INDIAN]: 5, [PAIRING_KEYS.CHINESE]: 3,
   },
   'Grüner Veltliner': {
     [PAIRING_KEYS.FISH]: 4, [PAIRING_KEYS.WHITE_FISH]: 4, [PAIRING_KEYS.SALMON]: 2,
@@ -407,6 +559,7 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.CHEESE]: 2, [PAIRING_KEYS.CHEESE_SUB]: 2,
     [PAIRING_KEYS.PASTA]: 2,
     [PAIRING_KEYS.VEGETABLES]: 3, [PAIRING_KEYS.SALAD]: 3,
+    [PAIRING_KEYS.SPICY]: 3, [PAIRING_KEYS.THAI]: 3, [PAIRING_KEYS.CHINESE]: 2,
   },
   'Marsanne': {
     [PAIRING_KEYS.FISH]: 4, [PAIRING_KEYS.WHITE_FISH]: 4,
@@ -421,6 +574,8 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.POULTRY]: 2,
     [PAIRING_KEYS.FISH]: 2, [PAIRING_KEYS.SALMON]: 2,
     [PAIRING_KEYS.VEGETABLES]: 2, [PAIRING_KEYS.SALAD]: 2,
+    [PAIRING_KEYS.SPICY]: 2, [PAIRING_KEYS.THAI]: 2,
+    [PAIRING_KEYS.DESSERT]: 4, [PAIRING_KEYS.FRUIT_DESSERT]: 4,
   },
   'Pinot Gris': {
     [PAIRING_KEYS.FISH]: 4, [PAIRING_KEYS.SALMON]: 4, [PAIRING_KEYS.WHITE_FISH]: 3,
@@ -429,6 +584,8 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 3,
     [PAIRING_KEYS.PASTA]: 3, [PAIRING_KEYS.PASTA_SUB]: 3, [PAIRING_KEYS.RISOTTO]: 3,
     [PAIRING_KEYS.VEGETABLES]: 3, [PAIRING_KEYS.MUSHROOMS]: 3,
+    [PAIRING_KEYS.SPICY]: 4, [PAIRING_KEYS.THAI]: 4, [PAIRING_KEYS.INDIAN]: 3, [PAIRING_KEYS.CHINESE]: 4,
+    [PAIRING_KEYS.BRUNCH]: 3, [PAIRING_KEYS.EGGS]: 3, [PAIRING_KEYS.SMOKED_SALMON]: 3,
   },
   'Pouilly-Fuissé': {
     [PAIRING_KEYS.SEAFOOD]: 4, [PAIRING_KEYS.LOBSTER]: 5,
@@ -442,6 +599,9 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.POULTRY]: 3, [PAIRING_KEYS.DUCK]: 4,
     [PAIRING_KEYS.PORK]: 5, [PAIRING_KEYS.PORK_CHOPS]: 5, [PAIRING_KEYS.PORK_BELLY]: 4, [PAIRING_KEYS.HAM]: 3,
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 3,
+    [PAIRING_KEYS.SPICY]: 5, [PAIRING_KEYS.THAI]: 5, [PAIRING_KEYS.INDIAN]: 5, [PAIRING_KEYS.CHINESE]: 4,
+    [PAIRING_KEYS.BRUNCH]: 3, [PAIRING_KEYS.SMOKED_SALMON]: 3,
+    [PAIRING_KEYS.DESSERT]: 2, [PAIRING_KEYS.FRUIT_DESSERT]: 3,
   },
   'Rosé': {
     [PAIRING_KEYS.SEAFOOD]: 4, [PAIRING_KEYS.SHRIMP]: 4, [PAIRING_KEYS.LOBSTER]: 2,
@@ -450,6 +610,8 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.PASTA]: 2, [PAIRING_KEYS.PIZZA]: 2,
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 3,
     [PAIRING_KEYS.VEGETABLES]: 4, [PAIRING_KEYS.SALAD]: 4, [PAIRING_KEYS.MEDITERRANEAN]: 5,
+    [PAIRING_KEYS.SPICY]: 3, [PAIRING_KEYS.THAI]: 3,
+    [PAIRING_KEYS.BRUNCH]: 4, [PAIRING_KEYS.EGGS]: 3, [PAIRING_KEYS.SMOKED_SALMON]: 3,
   },
   'Roussanne': {
     [PAIRING_KEYS.POULTRY]: 4, [PAIRING_KEYS.CHICKEN]: 4,
@@ -463,6 +625,8 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.FISH]: 4, [PAIRING_KEYS.WHITE_FISH]: 4, [PAIRING_KEYS.SALMON]: 3,
     [PAIRING_KEYS.CHEESE]: 4, [PAIRING_KEYS.CHEESE_SUB]: 4,
     [PAIRING_KEYS.VEGETABLES]: 3, [PAIRING_KEYS.SALAD]: 3,
+    [PAIRING_KEYS.SPICY]: 2, [PAIRING_KEYS.THAI]: 3,
+    [PAIRING_KEYS.BRUNCH]: 3, [PAIRING_KEYS.SMOKED_SALMON]: 3,
   },
   'Viognier': {
     [PAIRING_KEYS.SEAFOOD]: 3, [PAIRING_KEYS.LOBSTER]: 3,
@@ -470,6 +634,7 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.RED_MEAT]: 2, [PAIRING_KEYS.LAMB]: 3,
     [PAIRING_KEYS.FISH]: 3, [PAIRING_KEYS.WHITE_FISH]: 3,
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 3,
+    [PAIRING_KEYS.SPICY]: 2, [PAIRING_KEYS.INDIAN]: 3,
   },
   'White Blend': {
     [PAIRING_KEYS.FISH]: 4, [PAIRING_KEYS.WHITE_FISH]: 4, [PAIRING_KEYS.SALMON]: 3,
@@ -487,6 +652,9 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.PORK]: 3, [PAIRING_KEYS.HAM]: 4,
     [PAIRING_KEYS.CHEESE]: 4, [PAIRING_KEYS.CHEESE_SUB]: 4, [PAIRING_KEYS.CHARCUTERIE]: 3,
     [PAIRING_KEYS.PASTA]: 2,
+    [PAIRING_KEYS.SPICY]: 2, [PAIRING_KEYS.THAI]: 3,
+    [PAIRING_KEYS.BRUNCH]: 5, [PAIRING_KEYS.EGGS]: 4, [PAIRING_KEYS.SMOKED_SALMON]: 5,
+    [PAIRING_KEYS.DESSERT]: 3, [PAIRING_KEYS.FRUIT_DESSERT]: 3,
   },
   'Crémant': {
     [PAIRING_KEYS.SEAFOOD]: 4, [PAIRING_KEYS.OYSTERS]: 4, [PAIRING_KEYS.CAVIAR]: 3, [PAIRING_KEYS.SHRIMP]: 3, [PAIRING_KEYS.SUSHI]: 3,
@@ -494,6 +662,8 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.PORK]: 3, [PAIRING_KEYS.HAM]: 3,
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 3, [PAIRING_KEYS.CHARCUTERIE]: 3,
     [PAIRING_KEYS.PASTA]: 2,
+    [PAIRING_KEYS.SPICY]: 2, [PAIRING_KEYS.THAI]: 2,
+    [PAIRING_KEYS.BRUNCH]: 4, [PAIRING_KEYS.EGGS]: 3, [PAIRING_KEYS.SMOKED_SALMON]: 4,
   },
   'Prosecco': {
     [PAIRING_KEYS.SEAFOOD]: 3, [PAIRING_KEYS.SHRIMP]: 3,
@@ -501,27 +671,37 @@ export const VARIETAL_PAIRING_SCORES = {
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 2, [PAIRING_KEYS.CHARCUTERIE]: 3,
     [PAIRING_KEYS.PASTA]: 3, [PAIRING_KEYS.PASTA_SUB]: 3,
     [PAIRING_KEYS.VEGETABLES]: 2,
+    [PAIRING_KEYS.SPICY]: 2, [PAIRING_KEYS.THAI]: 2,
+    [PAIRING_KEYS.BRUNCH]: 4, [PAIRING_KEYS.EGGS]: 3, [PAIRING_KEYS.SMOKED_SALMON]: 3,
+    [PAIRING_KEYS.FRUIT_DESSERT]: 2,
   },
   'Sparkling Wine': {
     [PAIRING_KEYS.SEAFOOD]: 4, [PAIRING_KEYS.OYSTERS]: 4, [PAIRING_KEYS.CAVIAR]: 4, [PAIRING_KEYS.SHRIMP]: 3, [PAIRING_KEYS.SUSHI]: 4,
     [PAIRING_KEYS.FISH]: 2,
     [PAIRING_KEYS.PORK]: 2, [PAIRING_KEYS.HAM]: 2,
     [PAIRING_KEYS.CHEESE]: 3, [PAIRING_KEYS.CHEESE_SUB]: 3, [PAIRING_KEYS.CHARCUTERIE]: 3,
+    [PAIRING_KEYS.SPICY]: 3, [PAIRING_KEYS.THAI]: 3,
+    [PAIRING_KEYS.BRUNCH]: 5, [PAIRING_KEYS.EGGS]: 4, [PAIRING_KEYS.SMOKED_SALMON]: 4,
+    [PAIRING_KEYS.DESSERT]: 2, [PAIRING_KEYS.FRUIT_DESSERT]: 2,
   },
 
   // --- Dessert & Fortified ---
   'Late Harvest Riesling': {
     [PAIRING_KEYS.CHEESE]: 5, [PAIRING_KEYS.CHEESE_SUB]: 4,
+    [PAIRING_KEYS.DESSERT]: 5, [PAIRING_KEYS.FRUIT_DESSERT]: 5,
   },
   'Port': {
     [PAIRING_KEYS.CHEESE]: 5, [PAIRING_KEYS.CHEESE_SUB]: 5,
+    [PAIRING_KEYS.DESSERT]: 5, [PAIRING_KEYS.CHOCOLATE]: 5, [PAIRING_KEYS.FRUIT_DESSERT]: 3,
   },
   'Sauternes': {
     [PAIRING_KEYS.CHEESE]: 5, [PAIRING_KEYS.CHEESE_SUB]: 5,
     [PAIRING_KEYS.SEAFOOD]: 2, [PAIRING_KEYS.LOBSTER]: 2,
+    [PAIRING_KEYS.DESSERT]: 5, [PAIRING_KEYS.FRUIT_DESSERT]: 5,
   },
   'Sherry': {
     [PAIRING_KEYS.CHEESE]: 4, [PAIRING_KEYS.CHEESE_SUB]: 4, [PAIRING_KEYS.CHARCUTERIE]: 4,
     [PAIRING_KEYS.SEAFOOD]: 3, [PAIRING_KEYS.OYSTERS]: 2,
+    [PAIRING_KEYS.DESSERT]: 3, [PAIRING_KEYS.CHOCOLATE]: 2,
   },
 };
