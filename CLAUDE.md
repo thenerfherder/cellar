@@ -197,8 +197,8 @@ Works the **reverse direction**: given a dish category (and optional sub-categor
    - `prepBonus`: light/rich preparation style modifier from `PREPARATION_MODIFIERS`
    - `ratingBonus`: +1 if personally rated ≥4, −1 if rated ≤2
    - `occasionBonus`: casual surfaces everyday bottles; fancy/celebration surfaces special bottles
-4. **Score breakdown**: each wine displays its composite score; hovering reveals a `ScoreTag` tooltip breaking down every contributing factor (pairing fit, peak proximity, region, tannin, prep, rating, occasion) with green/red color coding. Zero-value factors are omitted. `ScoreTag` is a module-level component (not defined inside render).
-5. **Filter cellar** to wines whose varietal has score > 0 and are ready to drink, then sort by composite score descending.
+4. **Score breakdown**: each wine displays its composite score; hovering reveals a `ScoreTag` tooltip breaking down every contributing factor (pairing fit, peak proximity, region, tannin, prep, rating, occasion) with green/red color coding. Zero-value factors are omitted. `ScoreTag` and `WineRow` are module-level components (not defined inside render). Composite scores are pre-computed into a Map before sorting to avoid redundant recalculation.
+5. **Filter cellar** to wines whose varietal has score > 0 and are ready to drink, then sort by composite score descending. When multiple vintages of the same wine (same producer + name) are present, the older vintage always ranks first regardless of score.
 6. **Top result** is labelled "Pick". Each wine shows `· good with X, Y` (matched sub-category labels) inline.
 7. **Target Varietals** shows up to 5 varietals sorted by pairing score descending.
 
@@ -251,6 +251,7 @@ Ordered by priority:
 4. **Fix array-index key in WineList.jsx:9** — `<WineCard key={idx} ...>` should use `getWineKey(wine)` for stable identity.
 5. **Move `statusOrder` map out of render** in `useWineFiltering.js:54` — recreated on every sort call; hoist to module-level constant.
 ~~**`ScoreTag` defined inside render**~~ — fixed; hoisted to module-level component in `SommelierView.jsx`.
+~~**`WineRow` defined inside render IIFE**~~ — fixed; hoisted to module-level component in `SommelierView.jsx`.
 
 ### Tech Debt (larger)
 6. **Replace magic strings with named constants** — `'dashboard'`, `'rack'`, `'Other'`, `'NV'` appear 9+ times across files; should live in `constants.js`.

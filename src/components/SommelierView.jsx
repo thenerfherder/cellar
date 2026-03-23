@@ -208,6 +208,58 @@ function getRackPositions(wine, wines, racks) {
   ).sort((a, b) => a.rackName.localeCompare(b.rackName) || a.label.localeCompare(b.label));
 }
 
+function WineRow({ wine, index, varietalScores, wines, racks, getMatchReasons, scoreBreakdown, preparation, multiRack }) {
+  const status = getDrinkabilityStatus(wine);
+  const special = isSpecialBottle(wine);
+  const isPerfectPairing = (varietalScores[wine.varietal] ?? 0) === 5;
+  const positions = getRackPositions(wine, wines, racks);
+  const matchReasons = getMatchReasons(wine);
+  return (
+    <div className={`flex items-center gap-5 py-4 border-b border-gray-50 ${isPerfectPairing ? 'bg-blue-50/40' : special ? 'bg-blue-50/20' : ''}`}>
+      <div className="w-8 shrink-0 text-right">
+        <span className="text-xl font-black tabular-nums" style={{ color: '#e8e8e8' }}>{index}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span className="font-black text-gray-900 text-sm">{wine.producer}</span>
+          <span className="text-gray-300 text-xs">/</span>
+          <span className="text-gray-700 text-sm font-semibold">{wine.name}</span>
+          {wine.vintage && <span className="text-gray-400 text-sm">{wine.vintage}</span>}
+        </div>
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          <span className="text-xs text-gray-400">{wine.varietal}</span>
+          {wine.state && (
+            <>
+              <span className="text-gray-200">·</span>
+              <span className="text-xs text-gray-400">{wine.state}, {wine.country}</span>
+            </>
+          )}
+          {matchReasons.length > 0 && (
+            <>
+              <span className="text-gray-200">·</span>
+              <span className="text-xs text-gray-300">good with {matchReasons.slice(0, 2).map(r => r.toLowerCase()).join(', ')}</span>
+            </>
+          )}
+        </div>
+        {positions.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {positions.map(({ label, rackName }, j) => (
+              <span key={j} title={rackName} className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-bold rounded font-mono border border-amber-100">
+                {multiRack ? `${rackName} ${label}` : label}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2.5 shrink-0">
+        {wine.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{wine.quantity}</span>}
+        <ScoreTag breakdown={scoreBreakdown(wine)} preparation={preparation} />
+        {status && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[status]}`}>{status}</span>}
+      </div>
+    </div>
+  );
+}
+
 function ScoreTag({ breakdown, preparation }) {
   const { pairing, region, peak, tannin, prep, rating, occasion } = breakdown;
   const total = pairing + region + peak + tannin + prep + rating + occasion;
@@ -331,6 +383,8 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
   };
 
 
+  const multiRack = racks?.length > 1;
+
   const recommendedBottles = useMemo(() => {
     if (!recommendedVarietals.length) return [];
     // Only recommend wines that are ready or in their final year — no point
@@ -341,12 +395,14 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
       return !status || status === DRINKABILITY_STATUS.READY_NOW || status === DRINKABILITY_STATUS.FINAL_YEAR;
     });
 
+    const scoreCache = new Map(matching.map(w => [getWineKey(w), compositeScore(w)]));
+
     const sorted = [...matching].sort((a, b) => {
       // Same wine, different vintages: always prefer the older bottle
       if (a.producer === b.producer && a.name === b.name) {
         return (a.vintage ?? 9999) - (b.vintage ?? 9999);
       }
-      const scoreDiff = compositeScore(b) - compositeScore(a);
+      const scoreDiff = scoreCache.get(getWineKey(b)) - scoreCache.get(getWineKey(a));
       if (scoreDiff !== 0) return scoreDiff;
       return occasion === 'casual'
         ? a.estimatedPrice - b.estimatedPrice
@@ -522,59 +578,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
               </div>
             ) : (() => {
               const [topPick, ...rest] = recommendedBottles;
-              const multiRack = racks?.length > 1;
-
-              const WineRow = ({ wine, index }) => {
-                const status = getDrinkabilityStatus(wine);
-                const special = isSpecialBottle(wine);
-                const isPerfectPairing = (varietalScores[wine.varietal] ?? 0) === 5;
-                const positions = getRackPositions(wine, wines, racks);
-                const matchReasons = getMatchReasons(wine);
-                return (
-                  <div className={`flex items-center gap-5 py-4 border-b border-gray-50 ${isPerfectPairing ? 'bg-blue-50/40' : special ? 'bg-blue-50/20' : ''}`}>
-                    <div className="w-8 shrink-0 text-right">
-                      <span className="text-xl font-black tabular-nums" style={{ color: '#e8e8e8' }}>{index}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2 flex-wrap">
-                        <span className="font-black text-gray-900 text-sm">{wine.producer}</span>
-                        <span className="text-gray-300 text-xs">/</span>
-                        <span className="text-gray-700 text-sm font-semibold">{wine.name}</span>
-                        {wine.vintage && <span className="text-gray-400 text-sm">{wine.vintage}</span>}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                        <span className="text-xs text-gray-400">{wine.varietal}</span>
-                        {wine.state && (
-                          <>
-                            <span className="text-gray-200">·</span>
-                            <span className="text-xs text-gray-400">{wine.state}, {wine.country}</span>
-                          </>
-                        )}
-                        {matchReasons.length > 0 && (
-                          <>
-                            <span className="text-gray-200">·</span>
-                            <span className="text-xs text-gray-300">good with {matchReasons.slice(0, 2).map(r => r.toLowerCase()).join(', ')}</span>
-                          </>
-                        )}
-                      </div>
-                      {positions.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                          {positions.map(({ label, rackName }, j) => (
-                            <span key={j} title={rackName} className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-bold rounded font-mono border border-amber-100">
-                              {multiRack ? `${rackName} ${label}` : label}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2.5 shrink-0">
-                      {wine.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{wine.quantity}</span>}
-                      <ScoreTag breakdown={scoreBreakdown(wine)} preparation={preparation} />
-                      {status && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[status]}`}>{status}</span>}
-                    </div>
-                  </div>
-                );
-              };
+              const wineRowProps = { varietalScores, wines, racks, getMatchReasons, scoreBreakdown, preparation, multiRack };
 
               const topStatus = getDrinkabilityStatus(topPick);
               const topPositions = getRackPositions(topPick, wines, racks);
@@ -628,7 +632,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
                   {rest.length > 0 && (
                     <div>
                       {rest.map((wine, i) => (
-                        <WineRow key={getWineKey(wine)} wine={wine} index={i + 2} />
+                        <WineRow key={getWineKey(wine)} wine={wine} index={i + 2} {...wineRowProps} />
                       ))}
                     </div>
                   )}
