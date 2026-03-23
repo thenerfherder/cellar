@@ -342,6 +342,10 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
     });
 
     const sorted = [...matching].sort((a, b) => {
+      // Same wine, different vintages: always prefer the older bottle
+      if (a.producer === b.producer && a.name === b.name) {
+        return (a.vintage ?? 9999) - (b.vintage ?? 9999);
+      }
       const scoreDiff = compositeScore(b) - compositeScore(a);
       if (scoreDiff !== 0) return scoreDiff;
       return occasion === 'casual'
