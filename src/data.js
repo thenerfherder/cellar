@@ -360,6 +360,16 @@ export const PREPARATION_MODIFIERS = {
   },
 };
 
+// Varietals with naturally high tannins — used by SommelierView to adjust composite scores
+// regardless of drink window status. High-tannin wines benefit from fatty/robust dishes (+1)
+// and are less suited to delicate dishes (-1).
+export const HIGH_TANNIN_VARIETALS = new Set([
+  'Cabernet Sauvignon', 'Cabernet Sauvignon Blend', 'Nebbiolo', 'Syrah', 'Petite Sirah',
+  'Mourvèdre', 'Petit Verdot', 'Malbec', 'Zinfandel', 'Tempranillo',
+  'Cabernet Franc', 'Sangiovese', 'Barbera',
+  'Bordeaux Blend', 'Meritage', 'Red Blend', 'GSM Blend',
+]);
+
 export const VARIETAL_PAIRING_SCORES = {
   // --- Reds ---
   'Barbera': {

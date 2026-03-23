@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { WINE_PAIRINGS, VARIETAL_PAIRING_SCORES, REGION_SCORE_MODIFIERS, SUBREGION_SCORE_MODIFIERS, ROBUST_PAIRING_KEYS, DELICATE_PAIRING_KEYS, PREPARATION_MODIFIERS, getPairingsForWine } from '../data';
+import { WINE_PAIRINGS, VARIETAL_PAIRING_SCORES, REGION_SCORE_MODIFIERS, SUBREGION_SCORE_MODIFIERS, ROBUST_PAIRING_KEYS, DELICATE_PAIRING_KEYS, PREPARATION_MODIFIERS, HIGH_TANNIN_VARIETALS, getPairingsForWine } from '../data';
 import { getDrinkabilityStatus, getWineKey, isSpecialBottle } from '../utils';
 import { DRINKABILITY_STATUS, CONFIG, PAIRING_KEYS } from '../constants';
 
@@ -320,6 +320,55 @@ function WineRow({ wine, index, varietalScores, wines, racks, getMatchReasons, s
   );
 }
 
+function DrinkTonightRow({ wine, index, wines, racks, multiRack }) {
+  const status = getDrinkabilityStatus(wine);
+  const special = isSpecialBottle(wine);
+  const positions = getRackPositions(wine, wines, racks);
+  return (
+    <div className={`flex items-center gap-5 py-4 border-b border-gray-50 ${special ? 'bg-blue-50/20' : ''}`}>
+      <div className="w-8 shrink-0 text-right">
+        <span className="text-xl font-black tabular-nums" style={{ color: '#e8e8e8' }}>{index}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline gap-2 flex-wrap">
+          <span className="font-black text-gray-900 text-sm">{wine.producer}</span>
+          <span className="text-gray-300 text-xs">/</span>
+          <span className="text-gray-700 text-sm font-semibold">{wine.name}</span>
+          {wine.vintage && <span className="text-gray-400 text-sm">{wine.vintage}</span>}
+        </div>
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          <span className="text-xs text-gray-400">{wine.varietal}</span>
+          {wine.state && (
+            <>
+              <span className="text-gray-200">·</span>
+              <span className="text-xs text-gray-400">{wine.state}, {wine.country}</span>
+            </>
+          )}
+          {wine.drinkWindow && (
+            <>
+              <span className="text-gray-200">·</span>
+              <span className="text-xs text-gray-400">{wine.drinkWindow}</span>
+            </>
+          )}
+        </div>
+        {positions.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {positions.map(({ label, rackName }, j) => (
+              <span key={j} title={rackName} className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-bold rounded font-mono border border-amber-100">
+                {multiRack ? `${rackName} ${label}` : label}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-2.5 shrink-0">
+        {wine.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{wine.quantity}</span>}
+        {status && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[status]}`}>{status}</span>}
+      </div>
+    </div>
+  );
+}
+
 function ScoreTag({ breakdown, preparation }) {
   const { pairing, region, peak, tannin, prep, rating, occasion } = breakdown;
   const total = pairing + region + peak + tannin + prep + rating + occasion;
@@ -423,9 +472,7 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
     const subregionBonus = SUBREGION_SCORE_MODIFIERS[wine.state]?.[wine.varietal]?.[activeKey] ?? 0;
     const region = countryBonus + subregionBonus;
     const peak = getPeakProximityBonus(wine);
-    const status = getDrinkabilityStatus(wine);
-    const notReady = status === DRINKABILITY_STATUS.AGE_1_5 || status === DRINKABILITY_STATUS.AGE_5_PLUS;
-    const tannin = notReady && activeKey
+    const tannin = HIGH_TANNIN_VARIETALS.has(wine.varietal) && activeKey
       ? (ROBUST_PAIRING_KEYS.has(activeKey) ? 1 : DELICATE_PAIRING_KEYS.has(activeKey) ? -1 : 0)
       : 0;
     const prep = preparation ? (PREPARATION_MODIFIERS[preparation]?.[wine.varietal] ?? 0) : 0;
@@ -482,6 +529,23 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
     }
     return sorted;
   }, [wines, recommendedVarietals, varietalScores, occasion, activeKey, preparation, getRatingInfo]);
+
+  const drinkTonightBottles = useMemo(() => {
+    const ready = wines.filter(w => {
+      const status = getDrinkabilityStatus(w);
+      return !status || status === DRINKABILITY_STATUS.READY_NOW || status === DRINKABILITY_STATUS.FINAL_YEAR;
+    });
+    return [...ready].sort((a, b) => {
+      const aFinal = getDrinkabilityStatus(a) === DRINKABILITY_STATUS.FINAL_YEAR;
+      const bFinal = getDrinkabilityStatus(b) === DRINKABILITY_STATUS.FINAL_YEAR;
+      if (aFinal !== bFinal) return bFinal ? 1 : -1;
+      const peakDiff = getPeakProximityBonus(b) - getPeakProximityBonus(a);
+      if (peakDiff !== 0) return peakDiff;
+      return occasion === 'casual'
+        ? a.estimatedPrice - b.estimatedPrice
+        : b.estimatedPrice - a.estimatedPrice;
+    });
+  }, [wines, occasion]);
 
   return (
     <div>
@@ -596,8 +660,72 @@ export default function SommelierView({ wines, racks, getRatingInfo }) {
       )}
 
       {!selectedDish ? (
-        <div className="flex items-center justify-center py-24">
-          <p className="text-gray-200 text-xs uppercase tracking-widest">Select a dish to get started</p>
+        <div>
+          <div className="flex items-baseline gap-3 mb-4">
+            <p className="text-xs font-black uppercase tracking-widest text-gray-300">Drink Tonight</p>
+            {drinkTonightBottles.length > 0 && (
+              <span className="text-xs text-gray-300">{drinkTonightBottles.length} {drinkTonightBottles.length === 1 ? 'wine' : 'wines'} ready</span>
+            )}
+          </div>
+          {drinkTonightBottles.length === 0 ? (
+            <div className="py-16 text-center border border-dashed border-gray-100 rounded-xl">
+              <p className="text-gray-300 text-sm">No bottles are ready to drink right now</p>
+            </div>
+          ) : (() => {
+            const [topPick, ...rest] = drinkTonightBottles;
+            const topStatus = getDrinkabilityStatus(topPick);
+            const topPositions = getRackPositions(topPick, wines, racks);
+            return (
+              <div>
+                <div className={`mb-6 p-5 rounded-xl border ${topStatus === DRINKABILITY_STATUS.FINAL_YEAR ? 'border-red-200 bg-red-50/40' : isSpecialBottle(topPick) ? 'border-blue-100 bg-blue-50/30' : 'border-gray-200 bg-gray-50'}`}>
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <span className="text-xs font-black uppercase tracking-widest text-amber-500 pt-0.5">Tonight</span>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      {topPick.quantity > 1 && <span className="text-xs text-gray-400 font-semibold tabular-nums">×{topPick.quantity}</span>}
+                      {topStatus && <span className={`px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full ${STATUS_STYLES[topStatus]}`}>{topStatus}</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-2 flex-wrap mb-1">
+                    <span className="font-black text-gray-900">{topPick.producer}</span>
+                    <span className="text-gray-300 text-xs">/</span>
+                    <span className="text-gray-700 font-semibold">{topPick.name}</span>
+                    {topPick.vintage && <span className="text-gray-400">{topPick.vintage}</span>}
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs text-gray-400">{topPick.varietal}</span>
+                    {topPick.state && (
+                      <>
+                        <span className="text-gray-200">·</span>
+                        <span className="text-xs text-gray-400">{topPick.state}, {topPick.country}</span>
+                      </>
+                    )}
+                    {topPick.drinkWindow && (
+                      <>
+                        <span className="text-gray-200">·</span>
+                        <span className="text-xs text-gray-400">{topPick.drinkWindow}</span>
+                      </>
+                    )}
+                  </div>
+                  {topPositions.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {topPositions.map(({ label, rackName }, j) => (
+                        <span key={j} title={rackName} className="px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-bold rounded font-mono border border-amber-100">
+                          {multiRack ? `${rackName} ${label}` : label}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {rest.length > 0 && (
+                  <div>
+                    {rest.map((wine, i) => (
+                      <DrinkTonightRow key={getWineKey(wine)} wine={wine} index={i + 2} wines={wines} racks={racks} multiRack={multiRack} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       ) : (
         <>
