@@ -432,67 +432,61 @@ const WineCellar = () => {
           <StatCard label="Countries" value={stats.uniqueCountries} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          {/* Left column: segmented bars */}
-          <div className="flex flex-col gap-4">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Varietal</h2>
-              <SegmentedBarWithLegend data={varietalData} onClick={setSelectedVarietal} />
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Country</h2>
-              <SegmentedBarWithLegend data={regionData} onClick={setSelectedCountry} />
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Varietal</h2>
+            <SegmentedBarWithLegend data={varietalData} onClick={setSelectedVarietal} />
           </div>
 
-          {/* Right column: bar charts */}
-          <div className="flex flex-col gap-4">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Vintage</h2>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={vintageData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
-                  <YAxis hide />
-                  <Tooltip
-                    cursor={{ fill: 'rgba(0,0,0,0.04)' }}
-                    content={({ active, payload, label }) =>
-                      active && payload?.length ? (
-                        <div className="bg-gray-900 text-white text-xs rounded px-2 py-1">{label} · {payload[0].value} bottles</div>
-                      ) : null
-                    }
-                  />
-                  <Bar dataKey="value" radius={[3, 3, 0, 0]} onClick={(data) => setSelectedVintage(data.name)} className="cursor-pointer">
-                    {vintageData.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getColorByIndex(index)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Vintage</h2>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={vintageData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
+                <YAxis hide />
+                <Tooltip
+                  cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                  content={({ active, payload, label }) =>
+                    active && payload?.length ? (
+                      <div className="bg-gray-900 text-white text-xs rounded px-2 py-1">{label} · {payload[0].value} bottles</div>
+                    ) : null
+                  }
+                />
+                <Bar dataKey="value" radius={[3, 3, 0, 0]} onClick={(data) => setSelectedVintage(data.name)} className="cursor-pointer">
+                  {vintageData.map((_entry, index) => (
+                    <Cell key={`cell-${index}`} fill={getColorByIndex(index)} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Peak Year</h2>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={peakData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
-                  <YAxis hide />
-                  <Tooltip
-                    cursor={{ fill: 'rgba(0,0,0,0.04)' }}
-                    content={({ active, payload, label }) =>
-                      active && payload?.length ? (
-                        <div className="bg-gray-900 text-white text-xs rounded px-2 py-1">{label} · {payload[0].value} bottles</div>
-                      ) : null
-                    }
-                  />
-                  <Bar dataKey="value" radius={[3, 3, 0, 0]} onClick={(data) => setSelectedPeakYear(data.name)} className="cursor-pointer">
-                    {peakData.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={getColorByIndex(index)} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Country</h2>
+            <SegmentedBarWithLegend data={regionData} onClick={setSelectedCountry} />
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <h2 className="text-sm font-black text-gray-900 mb-3 uppercase tracking-tight">By Peak Year</h2>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={peakData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#9ca3af' }} tickLine={false} axisLine={false} />
+                <YAxis hide />
+                <Tooltip
+                  cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                  content={({ active, payload, label }) =>
+                    active && payload?.length ? (
+                      <div className="bg-gray-900 text-white text-xs rounded px-2 py-1">{label} · {payload[0].value} bottles</div>
+                    ) : null
+                  }
+                />
+                <Bar dataKey="value" radius={[3, 3, 0, 0]} onClick={(data) => setSelectedPeakYear(data.name)} className="cursor-pointer">
+                  {peakData.map((_entry, index) => (
+                    <Cell key={`cell-${index}`} fill={getColorByIndex(index)} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
